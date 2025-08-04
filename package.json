@@ -1,0 +1,42 @@
+{
+  "name": "sales-coaching-api",
+  "version": "1.0.0",
+  "description": "Sales coaching API with OpenAI integration",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest",
+    "setup": "node scripts/setup.js",
+    "example": "node examples/api-usage.js"
+  },
+  "keywords": ["sales", "coaching", "openai", "api"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "openai": "^4.20.1",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/test/**/*.test.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ]
+  }
+} 
