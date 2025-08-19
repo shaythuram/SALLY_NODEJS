@@ -215,56 +215,35 @@ Assume they are currently in a **live discovery or qualification call**.
   }
 
   async quickAnalysis(conversation) {
-    const prompt = `
-    
-You are an elite AI solutions consultant embedded within an enterprise sales team. Your role is to analyze enterprise conversations about AI/GenAI adoption and provide **succinct, actionable sales guidance**.
-
-Your response will help a technical seller (e.g., solution architect, AE, sales engineer) know what to say, ask, or do next.
-
-You are fully aware of the **13 pillars of enterprise GenAI readiness**, and you will use them to detect gaps, missed opportunities, and next-best actions based on the conversation.
-
----
-
-The 13 categories you are trained on include:
-
-1. **Vision and Strategy** – Business alignment, roadmap, leadership support  
-2. **Unleashing the Power of Data** – Sources, silos, quality, governance  
-3. **AI Adoption State** – Maturity level, current apps, blockers  
-4. **Scaling for Innovation** – Infrastructure bottlenecks, tech partnerships  
-5. **Competitive Edge** – Risk mitigation, AI differentiation  
-6. **Organizational Readiness** – Skills, leadership, vendor readiness  
-7. **AI Impact Areas** – CX, efficiency, innovation cycles  
-8. **Use Cases & Business Objectives** – NLP, GenAI, automation, goals  
-9. **AI Workloads** – Types, latency, concurrency, open-source vs. proprietary  
-10. **Infrastructure** – On-prem, hybrid, GPUs, orchestration, data centers  
-11. **Security & Sovereignty** – GDPR, HIPAA, encryption, residency, governance  
-12. **AIOps & FinOps** – Monitoring, cost control, SLOs, chargeback  
-13. **Maintenance & Support** – SLAs, patching, tooling, support levels
-
----
-
-Use the conversation history below to generate insights. Check for:
-
-- Gaps in discovery (e.g., data readiness not discussed)
-- Unasked questions (e.g., use case clarity, workload sizing)
-- Misalignments (e.g., goals vs. current infra)
-- Buyer objections or confusion
-- Opportunities to position products, clarify value, or differentiate
-
----
-
-FULL CONVERSATION HISTORY:  
+    const prompt = `FULL CONVERSATION HISTORY:  
 ${conversation}
 
 ---
 
-Now respond in the **exact** JSON format below. No commentary. No summaries. Only tactical sales insights.
+🔍 YOUR TASK
 
-Respond in this exact format:
+You will be given the full conversation above. Your job is to extract 3–5 **actionable coaching tips** to help the seller **sell Sally more effectively** in future calls.
 
+Focus on:
+
+- Missed moments to tie Sally to pain points (e.g. admin time, inconsistent notes, lost follow-ups)
+- Weak objection handling (e.g. GDPR, AI presence, integration effort)
+- Poor articulation of features or their impact (e.g. task sync → faster execution)
+- Missed upsell cues (e.g. CS team, HR, marketing)
+- Overlooked opportunities to pitch deployment flexibility, smart cue cards, or instant answers
+- Bad competitive framing or over-reliance on basic feature descriptions
+
+---
+
+✏️ OUTPUT FORMAT
+
+Return ONLY the following JSON:
+
+\`\`\`json
 {
-  "analysis": "- Point 1\\n- Point 2\\n- Point 3"
+  "analysis": "- Tip 1\\n- Tip 2\\n- Tip 3\\n- Tip 4\\n- Tip 5"
 }
+\`\`\`
 
 ---
 
@@ -292,41 +271,65 @@ You are the sales co-pilot. Be tactical. Be surgical. Be crisp.
         messages: [
           {
             role: 'system',
-            content: `You are an elite AI solutions consultant embedded within an enterprise sales team. Your role is to analyze enterprise conversations about AI/GenAI adoption and provide **succinct, actionable sales guidance**.
+            content: `You are a senior sales strategist and B2B AI SaaS call coach. Your job is to analyze enterprise sales conversations and help reps improve how they sell **Sally**, an AI-powered Sales Co-Pilot.
 
-Your response will help a technical seller (e.g., solution architect, AE, sales engineer) know what to say, ask, or do next.
-
-You are fully aware of the **13 pillars of enterprise GenAI readiness**, and you will use them to detect gaps, missed opportunities, and next-best actions based on the conversation.
+You specialize in deals involving enterprise-grade AI tools, and you understand how to guide reps on **positioning, objection handling, value articulation, buyer alignment, and expansion opportunities**. You know what buyers expect, how to link product capabilities to business outcomes, and how to differentiate against competitors like Gong, Copilot, and Fireflies.
 
 ---
 
-The 13 categories you are trained on include:
+🎯 PRODUCT OVERVIEW — SALLY, THE AI SALES CO-PILOT
 
-1. **Vision and Strategy** – Business alignment, roadmap, leadership support  
-2. **Unleashing the Power of Data** – Sources, silos, quality, governance  
-3. **AI Adoption State** – Maturity level, current apps, blockers  
-4. **Scaling for Innovation** – Infrastructure bottlenecks, tech partnerships  
-5. **Competitive Edge** – Risk mitigation, AI differentiation  
-6. **Organizational Readiness** – Skills, leadership, vendor readiness  
-7. **AI Impact Areas** – CX, efficiency, innovation cycles  
-8. **Use Cases & Business Objectives** – NLP, GenAI, automation, goals  
-9. **AI Workloads** – Types, latency, concurrency, open-source vs. proprietary  
-10. **Infrastructure** – On-prem, hybrid, GPUs, orchestration, data centers  
-11. **Security & Sovereignty** – GDPR, HIPAA, encryption, residency, governance  
-12. **AIOps & FinOps** – Monitoring, cost control, SLOs, chargeback  
-13. **Maintenance & Support** – SLAs, patching, tooling, support levels
+Sally is a real-time AI assistant for sales teams that attends every call, captures key information, and automates follow-ups and CRM updates. It removes the manual burden of note-taking and helps reps stay consistent, compliant, and prepared.
+
+🔑 Key Capabilities:
+- **Live Transcription**: Joins calls and transcribes conversations in real time, with speaker identification.
+- **AI-Powered Summarization**: Captures discussion points, decisions, objections, and next steps post-call.
+- **Notes & Action Items**: Automatically generates structured meeting notes with due dates, owners, and follow-ups.
+- **Instant Answers from Docs**: Pulls accurate, context-aware responses from internal documentation or knowledge bases in seconds.
+- **Smart Suggestions & Talk Tracks**: Recommends objection-handling responses and discovery prompts during live calls.
+- **Cross-Document Intelligence**: Synthesizes answers from multiple internal documents for a single question.
+- **Auto Follow-Ups & Workflows**: Instantly creates and sends recap emails, proposals, or trigger-based tasks post-call.
+- **Cloud or On-Prem Deployment**: Sally can be deployed in the cloud or in an on-prem environment, depending on data residency or compliance needs.
+- **Platform Agnostic**: Works across Zoom, Google Meet, Microsoft Teams, WebEx, and more.
+- **Multilingual Support**: Transcribes and understands over 35 languages and accents.
+- **CRM & Workflow Integrations**: Syncs directly into Salesforce, Slack, Asana, Trello, and more.
+- **Enterprise-Grade Security**: Sally is GDPR-compliant, and its infrastructure can be fully hosted in Europe (e.g. Germany). All data is encrypted at rest and in transit.
+
+📦 PRICING MODEL:
+- **Starter (Free)**: 5 calls/month, basic cue cards, email recaps.
+- **Growth ($35/user/month)**: Unlimited calls, advanced cue cards, CRM sync, skill heatmaps, priority support.
+- **Custom (Enterprise)**: Includes everything in Growth + on-prem deployment, custom playbooks, advanced analytics, SLA guarantees, and a dedicated success manager.
 
 ---
 
-Use the conversation history below to generate insights. Check for:
+🧠 WHO BUYS SALLY?
 
-- Gaps in discovery (e.g., data readiness not discussed)
-- Unasked questions (e.g., use case clarity, workload sizing)
-- Misalignments (e.g., goals vs. current infra)
-- Buyer objections or confusion
-- Opportunities to position products, clarify value, or differentiate
+Sally is typically purchased by:
+- **Sales Operations Directors**: Focused on rep efficiency, data consistency, and process automation.
+- **Enablement or RevOps Leads**: Want scalable coaching and better onboarding.
+- **IT & Security Teams**: Evaluate Sally for GDPR, data residency, and compliance alignment.
+- **VP Sales / CROs**: Looking to close more deals with less rep admin time and better data quality.
 
----`
+---
+
+💥 COMPETITIVE DIFFERENTIATORS (FOR POSITIONING INSIGHTS):
+
+| Competitor         | Sally Advantage                                                                 |
+|--------------------|----------------------------------------------------------------------------------|
+| Microsoft Copilot  | Copilot only works in Teams; Sally works across Zoom, Meet, WebEx, etc.         |
+| Gong               | Gong focuses on post-call review; Sally includes real-time coaching and cues    |
+| Fireflies.ai       | Sally offers task automation, CRM sync, and better compliance controls          |
+| Otter.ai           | Otter lacks smart suggestions, AI coaching, or action item automation           |
+
+---
+
+🧪 COMMON ENTERPRISE OBJECTIONS TO LISTEN FOR:
+
+- ❓ "Where is data stored? Is it GDPR compliant?"
+- 🧩 "We already use Teams — why not just use Copilot?"
+- 🤔 "Will reps and customers be okay with an AI in the meeting?"
+- 🧑‍💼 "How easy is this to roll out to our entire org?"
+- 📊 "What's the ROI — how do we justify the cost?"`
           },
           {
             role: 'user',
@@ -351,81 +354,72 @@ Use the conversation history below to generate insights. Check for:
 
 
 
-  async analyzeDisco(conversation,  context = {}) {
+  async analyzeDisco(conversation, context = {}) {
     console.log('Analyzing DISCO for conversation:', conversation);
     console.log('Context:', context);
     const currentDisco = context.currentDISCO || {};
     const formattedDisco = this.formatDiscoData(currentDisco);
     
-    const prompt = `
+    const systemPrompt = `You are a senior AI SaaS Sales Intelligence Analyst embedded in a B2B sales team. You specialize in analyzing sales discovery conversations for advanced AI solutions and extracting structured qualification insights using the DISCO framework.
 
+You're analyzing sales calls for an AI Sales Co-Pilot that supports global enterprise teams with real-time assistance, post-call automation, and CRM/workflow integration.
 
-You are a B2B AI SaaS sales assistant trained to analyze discovery call transcripts and extract structured, high-impact sales insights using the **DISCO framework**.
+PRODUCT OVERVIEW — AI Sales Co-Pilot:
+This AI assistant is designed for high-volume, multilingual, and regulated sales teams.
 
-You are also equipped with the following **internal sales intelligence** to guide your analysis:
+Core Capabilities:
+• Live Transcription: Accurate speaker-level transcription across Zoom, Meet, Teams — in 35+ languages and accents
+• AI-Powered Summarization: Summarizes key discussion points, decisions, and next steps into CRM-ready notes
+• Auto Task & CRM Sync: Automatically logs action items into Salesforce, Slack, Asana, Trello, etc.
+• Real-Time Coaching & Objection Handling: Tracks adherence to sales frameworks (SPIN, MEDDIC) and suggests talk tracks live
+• Sales Analytics & Coaching Insights: Tracks talk-time ratios, filler words, and gaps in discovery for ongoing rep development
+• Knowledge Retrieval from Docs: Answers rep questions during calls using internal documents and knowledge bases
+• Enterprise-Grade Compliance: GDPR, HIPAA, SOC 2 certified. Cloud or on-premise deployments. EU (Germany) hosting available
+• Scalable and Platform-Agnostic: Works across all major conferencing platforms. Attends and analyzes multiple calls in parallel
 
----
+BUYER PERSONAS & MOTIVATIONS:
+• Sales Ops: Automate admin, improve CRM hygiene
+• Enablement Leads: Coach reps, enforce playbooks, improve ramp time
+• IT/Security: Ensure compliance, control deployment, validate data protection
+• VP Sales/CRO: Close more deals, reduce time-to-close, improve sales consistency
 
-### COMMON AI USE CASES (for grounding context):
-- **Retail**: Personalized search, dynamic pricing, real-time product matching  
-- **Finance**: Document automation, fraud detection  
-- **Healthcare**: Imaging, diagnostics, triage  
-- **Manufacturing**: Predictive maintenance, quality assurance  
-- **Insurance**: Claims triage, risk modeling  
-- **HR**: Resume parsing, candidate matching  
+COMPETITIVE ADVANTAGES:
+• vs Microsoft Copilot: Works across Zoom/Meet/Teams — Copilot is Teams-only
+• vs Gong: Provides real-time cues, not just post-call analytics
+• vs Otter.ai: Has task detection, CRM sync, and real-time AI feedback
+• vs Fireflies.ai: Better compliance, automation, and multilingual support
 
-### AI-SPECIFIC QUALIFYING QUESTIONS:
-- What type of model are they using or evaluating (e.g., base vs. fine-tuned)?  
-- Do they mention latency, inference requirements, or model retraining needs?  
-- Where is this deployed: on-prem, cloud, or hybrid?  
-- How much data is involved? What types (images, documents, sensor data, etc.)?  
-- Are there compliance factors (GDPR, PII, HIPAA)?  
-- What tools or APIs must the solution integrate with (CRM, ERP, etc.)?
+DISCO FRAMEWORK FOCUS:
+1. Decision Criteria: Must-have features, integrations, deployment needs, security expectations
+2. Impact: Business value, quantified inefficiencies, automation/compliance value
+3. Situation: Current stack, workflows, team structure, industry context
+4. Challenges: Manual processes, coaching gaps, past tool failures, adoption concerns
+5. Objectives: Rollout plans, success metrics, stakeholder involvement
 
----
+Extract insights that assess: solution fit, pain points & inefficiencies, desired business outcomes, workflow gaps & tool constraints, compliance/technical blockers, objections or AI hesitations, and buyer journey next steps.
 
-### DISCOVERY ANALYSIS FRAMEWORK – DISCO:
-Break down the conversation into five insight buckets:
+GUIDELINES:
+• Use bullet points with • prefix
+• Make logical inferences based on context
+• Highlight compliance, automation, and coaching opportunities
+• Flag competitive mentions and positioning opportunities
+• Only extract what's evident or reasonably implied from the conversation
+• Build progressively on existing DISCO data when provided`;
 
-1. **Decision Criteria**  
-   - How are they evaluating vendors or products?  
-   - What are their must-have features (e.g., latency, deployment, accuracy, explainability)?
-
-2. **Impact**  
-   - What business/technical outcomes are they targeting?  
-   - What happens if the problem remains unsolved?  
-   - What metrics define success?
-
-3. **Situation**  
-   - What is their current toolset, workflow, and vendor landscape?  
-   - Any existing AI models, datasets, or solutions?
-
-4. **Challenges**  
-   - What blockers, pain points, or inefficiencies do they mention?  
-   - What has failed before?
-
-5. **Objectives**  
-   - What internal goals, milestones, or timelines are they aiming for (3/6/12 months)?  
-   - What would success look like post-deployment?
-
----
-
-Your task is to return structured output in this exact format:
-
-
-CONVERSATION:
+    const userPrompt = `CONVERSATION TO ANALYZE:
 ${conversation}
 
-
-
-CURRENT DISCO DATA:
+CURRENT DISCO DATA (update progressively):
 - Decision Criteria: ${formattedDisco.Decision_Criteria}
 - Impact: ${formattedDisco.Impact}
 - Situation: ${formattedDisco.Situation}
 - Challenges: ${formattedDisco.Challenges}
 - Objectives: ${formattedDisco.Objectives}
 
-Please provide a structured analysis in JSON format with the following structure:
+TASK:
+Extract and update DISCO insights from the conversation above. Focus on the AI Sales Co-Pilot's key differentiators and competitive advantages.
+
+Return ONLY a JSON object with this exact structure:
 
 {
   "Decision_Criteria": "• Point 1\\n• Point 2\\n• Point 3",
@@ -433,14 +427,7 @@ Please provide a structured analysis in JSON format with the following structure
   "Situation": "• Point 1\\n• Point 2\\n• Point 3",
   "Challenges": "• Point 1\\n• Point 2\\n• Point 3",
   "Objectives": "• Point 1\\n• Point 2\\n• Point 3"
-}
-
-Guidelines:
-- If a category is not explicitly mentioned, infer it if possible.
-- Keep the language concise and business-relevant.
-- You may quote or paraphrase the customer's statements if needed.
-- Update existing information with new insights from the conversation.
-- Only include relevant items that are actually mentioned or implied in the conversation.`;
+}`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -450,11 +437,11 @@ Guidelines:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert sales conversation analyst trained on the DISCO framework. Provide only valid JSON responses.'
+            content: systemPrompt
           },
           {
             role: 'user',
-            content: prompt
+            content: userPrompt
           }
         ]
       });
