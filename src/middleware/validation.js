@@ -156,9 +156,21 @@ const ephemeralKeyValidation = [
   handleValidationErrors
 ];
 
+const postCallStepsValidation = [
+  body('conversation')
+    .trim()
+    .notEmpty()
+    .withMessage('The conversation field is required.')
+    .isLength({ max: 10000 })
+    .withMessage('The conversation field must not exceed 10000 characters.'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   quickAnswerValidation,
   discoValidation,
   ephemeralKeyValidation,
+  postCallStepsValidation,
   ValidationError
 }; 

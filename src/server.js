@@ -7,6 +7,7 @@ require('dotenv').config();
 const quickAnswerRoutes = require('./routes/quick-answer');
 const discoRoutes = require('./routes/disco');
 const ephemeralKeyRoutes = require('./routes/ephemeral-key');
+const postCallStepsRoutes = require('./routes/post-call-steps');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api', quickAnswerRoutes);
 app.use('/api', discoRoutes);
+app.use('/api', postCallStepsRoutes);
 app.use('/api/realtime', ephemeralKeyRoutes);
 
 // 404 handler

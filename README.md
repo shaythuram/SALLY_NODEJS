@@ -24,7 +24,12 @@ A Node.js API server that provides real-time sales coaching insights using OpenA
 - Extracts structured DISCO framework data
 - Frequency: Every 3-5 seconds during conversations
 
-### 3. Ephemeral Key Generation
+### 3. Post-Call Steps Analysis
+- **POST** `/api/post-call-steps`
+- Generates structured post-call action items and next steps
+- Frequency: After each call or conversation update
+
+### 4. Ephemeral Key Generation
 - **POST** `/api/realtime/ephemeral-key`
 - Generates secure keys for OpenAI Realtime API
 - Frequency: Session startup only
@@ -136,6 +141,29 @@ The server will start on `http://localhost:3000` (or the port specified in your 
   "Situation": "• Point 1\n• Point 2\n• Point 3",
   "Challenges": "• Point 1\n• Point 2\n• Point 3",
   "Objectives": "• Point 1\n• Point 2\n• Point 3"
+}
+```
+
+### Post-Call Steps Analysis
+
+**Endpoint:** `POST /api/post-call-steps`
+
+**Request Body:**
+```json
+{
+  "conversation": "string (required, max 10000 chars)"
+}
+```
+
+**Response:**
+```json
+{
+  "followUpActions": "- Action 1\n- Action 2\n- Action 3",
+  "informationGathering": "- Research 1\n- Research 2\n- Research 3",
+  "stakeholderEngagement": "- Stakeholder 1\n- Stakeholder 2\n- Stakeholder 3",
+  "proposalPreparation": "- Prep item 1\n- Prep item 2\n- Prep item 3",
+  "internalCoordination": "- Internal task 1\n- Internal task 2\n- Internal task 3",
+  "timelineManagement": "- Deadline 1\n- Deadline 2\n- Deadline 3"
 }
 ```
 

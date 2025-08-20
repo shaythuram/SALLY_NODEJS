@@ -215,23 +215,35 @@ Assume they are currently in a **live discovery or qualification call**.
   }
 
   async quickAnalysis(conversation) {
-    const prompt = `FULL CONVERSATION HISTORY:  
+    const prompt = `
+FULL CONVERSATION HISTORY:  
 ${conversation}
 
 ---
 
 🔍 YOUR TASK
 
-You will be given the full conversation above. Your job is to extract 3–5 **actionable coaching tips** to help the seller **sell Sally more effectively** in future calls.
+You are a sales strategist analyzing this sales conversation. Extract **3–5 sharp coaching tips** to help the seller pitch **SALLY**, the AI Sales Co-Pilot, more effectively next time.
 
-Focus on:
+🎯 SALLY SNAPSHOT (for reference):
+- AI assistant for B2B sales teams
+- Real-time transcription + cue cards across Zoom, Meet, Teams, WebEx
+- Live answers from internal docs during calls
+- Auto-generates summaries, follow-ups, tasks, and CRM sync
+- Integrates with Salesforce, HubSpot, Google Drive, Slack
+- Supports both on-premise and cloud
+- SOC-2 Type II, GDPR, HIPAA compliant with EU hosting
+- 35+ language support for global orgs
+- Beats Gong, Otter, Fireflies with real-time coaching + automation
 
-- Missed moments to tie Sally to pain points (e.g. admin time, inconsistent notes, lost follow-ups)
-- Weak objection handling (e.g. GDPR, AI presence, integration effort)
-- Poor articulation of features or their impact (e.g. task sync → faster execution)
-- Missed upsell cues (e.g. CS team, HR, marketing)
-- Overlooked opportunities to pitch deployment flexibility, smart cue cards, or instant answers
-- Bad competitive framing or over-reliance on basic feature descriptions
+---
+
+🧠 Focus areas:
+- Missed pain tie-ins (e.g. admin time, follow-up gaps, inconsistent CRM hygiene)
+- Poor objection handling (e.g. AI presence, compliance, IT pushback)
+- Weak feature→impact mapping (e.g. cue cards = consistency; doc search = faster objection handling)
+- Missed upsell cues (CS, HR, multilingual teams, security)
+- Weak competitive positioning (e.g. Gong = post-call; Sally = live coaching)
 
 ---
 
@@ -245,23 +257,62 @@ Return ONLY the following JSON:
 }
 \`\`\`
 
+🎯 RULES:
+- 3–5 tips total
+- Each bullet = ≤15 words
+- Use markdown dash format (- Tip)
+- Push the deal forward — don’t repeat what happened
+- Be tactical, clear, and sharp — no fluff
+- Output must be under 120 words
+
 ---
 
-### GUIDELINES:
-- Output must be in **markdown bullet format** (e.g., "- Bullet")  
-- Keep each point **succinct** (≤15 words)  
-- Focus on **what the salesperson should say, ask, or clarify next**  
-- Highlight **missed discovery**, **alignment gaps**, or **strategic pivots**  
-- Draw from the 13 categories — assume full framework awareness  
-- Max 5 bullets per response  
-- Total output under 120 words  
-- Never restate what was already discussed — push the deal forward  
-- Language should be **clear, directive, and immediately usable in a sales call**
+📌 EXAMPLES (copy this tone + structure):
 
-You are the sales co-pilot. Be tactical. Be surgical. Be crisp.
+Input:
+Call mentioned Gong didn’t integrate with CRM. Buyer unsure about AI in meetings.
+
+Output:
+\`\`\`json
+{
+  "analysis": "- Tie CRM sync to Gong gap\\n- Reassure AI presence with silent observer mode\\n- Emphasize on-prem hosting option\\n- Ask if CS faces same CRM pain\\n- Reinforce cue cards for message consistency"
+}
+\`\`\`
+
+---
+
+Input:
+Rep pitched features well but ignored ROI questions and multilingual/global expansion.
+
+Output:
+\`\`\`json
+{
+  "analysis": "- Quantify 4–5 hrs/week saved\\n- Mention EU-hosting for GDPR\\n- Ask about language support needs\\n- Push CRM sync to show revenue impact\\n- Explore CS/Marketing team use cases"
+}
+\`\`\`
+
+---
+
+Input:
+Rep focused on features but didn’t show impact. Missed coaching and security hooks.
+
+Output:
+\`\`\`json
+{
+  "analysis": "- Connect cue cards to pipeline consistency\\n- Highlight GDPR + HIPAA compliance for IT\\n- Ask about CS onboarding needs\\n- Reinforce multilingual support\\n- Pitch skill heatmaps for rep coaching"
+}
+\`\`\`
+
+---
+
+Now analyze the conversation above.
+
+Output ONLY the final JSON. No explanation.
+`
 
 
-    `;
+
+    ;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -271,65 +322,81 @@ You are the sales co-pilot. Be tactical. Be surgical. Be crisp.
         messages: [
           {
             role: 'system',
-            content: `You are a senior sales strategist and B2B AI SaaS call coach. Your job is to analyze enterprise sales conversations and help reps improve how they sell **Sally**, an AI-powered Sales Co-Pilot.
-
-You specialize in deals involving enterprise-grade AI tools, and you understand how to guide reps on **positioning, objection handling, value articulation, buyer alignment, and expansion opportunities**. You know what buyers expect, how to link product capabilities to business outcomes, and how to differentiate against competitors like Gong, Copilot, and Fireflies.
-
----
-
-🎯 PRODUCT OVERVIEW — SALLY, THE AI SALES CO-PILOT
-
-Sally is a real-time AI assistant for sales teams that attends every call, captures key information, and automates follow-ups and CRM updates. It removes the manual burden of note-taking and helps reps stay consistent, compliant, and prepared.
-
-🔑 Key Capabilities:
-- **Live Transcription**: Joins calls and transcribes conversations in real time, with speaker identification.
-- **AI-Powered Summarization**: Captures discussion points, decisions, objections, and next steps post-call.
-- **Notes & Action Items**: Automatically generates structured meeting notes with due dates, owners, and follow-ups.
-- **Instant Answers from Docs**: Pulls accurate, context-aware responses from internal documentation or knowledge bases in seconds.
-- **Smart Suggestions & Talk Tracks**: Recommends objection-handling responses and discovery prompts during live calls.
-- **Cross-Document Intelligence**: Synthesizes answers from multiple internal documents for a single question.
-- **Auto Follow-Ups & Workflows**: Instantly creates and sends recap emails, proposals, or trigger-based tasks post-call.
-- **Cloud or On-Prem Deployment**: Sally can be deployed in the cloud or in an on-prem environment, depending on data residency or compliance needs.
-- **Platform Agnostic**: Works across Zoom, Google Meet, Microsoft Teams, WebEx, and more.
-- **Multilingual Support**: Transcribes and understands over 35 languages and accents.
-- **CRM & Workflow Integrations**: Syncs directly into Salesforce, Slack, Asana, Trello, and more.
-- **Enterprise-Grade Security**: Sally is GDPR-compliant, and its infrastructure can be fully hosted in Europe (e.g. Germany). All data is encrypted at rest and in transit.
-
-📦 PRICING MODEL:
-- **Starter (Free)**: 5 calls/month, basic cue cards, email recaps.
-- **Growth ($35/user/month)**: Unlimited calls, advanced cue cards, CRM sync, skill heatmaps, priority support.
-- **Custom (Enterprise)**: Includes everything in Growth + on-prem deployment, custom playbooks, advanced analytics, SLA guarantees, and a dedicated success manager.
+            content: 
+            `
+   You are a senior sales strategist and enterprise SaaS call coach. You are coaching reps selling **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.
 
 ---
 
-🧠 WHO BUYS SALLY?
+🧠 YOU KNOW SALLY INSIDE OUT.
 
-Sally is typically purchased by:
-- **Sales Operations Directors**: Focused on rep efficiency, data consistency, and process automation.
-- **Enablement or RevOps Leads**: Want scalable coaching and better onboarding.
-- **IT & Security Teams**: Evaluate Sally for GDPR, data residency, and compliance alignment.
-- **VP Sales / CROs**: Looking to close more deals with less rep admin time and better data quality.
+SALLY is a real-time AI sales assistant designed to:
+- Capture and structure live sales calls
+- Reduce manual note-taking (saves ~4–5 hrs/week/rep)
+- Automate follow-ups, emails, tasks, and CRM updates
+- Provide real-time objection handling and cue cards
+- Pull instant answers from internal docs or knowledge base
+- Generate summaries, next steps, and action items post-call
+
+💼 SALLY Integrates With:
+- **CRMs**: Salesforce, HubSpot
+- **Collaboration**: Zoom, Meet, Teams, WebEx, Slack
+- **Storage**: Microsoft 365, Google Drive
+
+📦 DEPLOYMENT
+- Works in cloud or on-prem
+- Fully GDPR, HIPAA, SOC-2 Type II compliant
+- Offers data residency options (e.g., EU/Germany hosting)
+
+🌍 GLOBAL-READY
+- Real-time multilingual support (35+ languages)
+- Perfect for regional or multinational sales teams
+
+💸 PRICING
+- Starter (Free): 5 calls/month
+- Growth ($35/user/mo): Advanced cue cards, CRM sync, heatmaps
+- Custom (Enterprise): On-prem, playbooks, analytics, SLA
 
 ---
 
-💥 COMPETITIVE DIFFERENTIATORS (FOR POSITIONING INSIGHTS):
+🔎 WHO BUYS SALLY?
 
-| Competitor         | Sally Advantage                                                                 |
-|--------------------|----------------------------------------------------------------------------------|
-| Microsoft Copilot  | Copilot only works in Teams; Sally works across Zoom, Meet, WebEx, etc.         |
-| Gong               | Gong focuses on post-call review; Sally includes real-time coaching and cues    |
-| Fireflies.ai       | Sally offers task automation, CRM sync, and better compliance controls          |
-| Otter.ai           | Otter lacks smart suggestions, AI coaching, or action item automation           |
+- **Sales Ops**: Wants CRM consistency and admin reduction
+- **RevOps & Enablement**: Cares about ramp time, coaching, playbook adherence
+- **IT & Security**: Needs GDPR/HIPAA, data control, deployment flexibility
+- **CROs/VP Sales**: Want revenue with less rep effort
 
 ---
 
-🧪 COMMON ENTERPRISE OBJECTIONS TO LISTEN FOR:
+🧨 COMPETITOR EDGE
 
-- ❓ "Where is data stored? Is it GDPR compliant?"
-- 🧩 "We already use Teams — why not just use Copilot?"
-- 🤔 "Will reps and customers be okay with an AI in the meeting?"
-- 🧑‍💼 "How easy is this to roll out to our entire org?"
-- 📊 "What's the ROI — how do we justify the cost?"`
+| Tool         | Sally Advantage                                                    |
+|--------------|---------------------------------------------------------------------|
+| Gong         | Gong is post-call; Sally coaches **live** with smart cue cards     |
+| Otter.ai     | Otter lacks objection handling or follow-up automation             |
+| Fireflies    | Weak on security & structured CRM sync                             |
+| MS Copilot   | Only works in Teams; Sally is platform-agnostic + multilingual     |
+
+---
+
+🎯 YOUR GOAL
+
+Extract up to 5 **specific coaching points** to improve how the rep sold Sally in this call.
+
+Coach the rep on:
+- Tying Sally to pain (admin, notes, missed follow-ups, CRM mess)
+- Objection handling (AI, compliance, training effort)
+- Feature-to-impact clarity (cue cards = talk track control; instant docs = faster objection handling)
+- Missed upsell signals (e.g., CS, HR, multilingual teams)
+- Buyer alignment gaps (CRO wants ROI; IT wants data control)
+- Competitive clarity (Don’t just name-drop competitors — differentiate surgically)
+
+Return ONLY a JSON block with markdown bullets under 120 words.
+
+Be blunt. Be sharp. Be helpful.`         
+            
+
+
           },
           {
             role: 'user',
@@ -479,6 +546,100 @@ Return ONLY a JSON object with this exact structure:
     }
   }
 
+  async analyzePostCallSteps(conversation) {
+    console.log('Analyzing post-call steps for conversation:', conversation);
+    
+    const systemPrompt = `You are a senior sales strategist and post-call execution specialist. You analyze sales conversations and generate structured action items for **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.
+
+SALLY PRODUCT OVERVIEW:
+SALLY is a real-time AI sales assistant designed to:
+- Capture and structure live sales calls
+- Reduce manual note-taking (saves ~4–5 hrs/week/rep)
+- Automate follow-ups, emails, tasks, and CRM updates
+- Provide real-time objection handling and cue cards
+- Pull instant answers from internal docs or knowledge base
+- Generate summaries, next steps, and action items post-call
+
+💼 SALLY Integrates With:
+- **CRMs**: Salesforce, HubSpot
+- **Collaboration**: Zoom, Meet, Teams, WebEx, Slack
+- **Storage**: Microsoft 365, Google Drive
+
+📦 DEPLOYMENT
+- Works in cloud or on-prem
+- Fully GDPR, HIPAA, SOC-2 Type II compliant
+- Offers data residency options (e.g., EU/Germany hosting)
+
+🌍 GLOBAL-READY
+- Real-time multilingual support (35+ languages)
+- Perfect for regional or multinational sales teams
+
+POST-CALL STEPS CATEGORIES:
+1. **Follow-up Actions**: Immediate actions to maintain momentum
+2. **Information Gathering**: Research and data collection needed
+3. **Stakeholder Engagement**: People to connect with or involve
+4. **Proposal/Demo Preparation**: Next meeting or presentation prep
+5. **Internal Coordination**: Team alignment and resource planning
+6. **Timeline Management**: Key dates and deadlines to track
+
+GUIDELINES:
+• Use markdown bullet points with - prefix
+• Be specific and actionable  
+• Include deadlines when mentioned or implied
+• Prioritize by urgency and impact
+• Reference specific conversation points
+• Focus on advancing the sales process
+• Each bullet point should be concise and actionable
+• Use proper markdown formatting in the JSON strings`;
+
+    const userPrompt = `CONVERSATION TO ANALYZE:
+${conversation}
+
+TASK:
+Extract post-call action items from the conversation above. Focus on concrete next steps that will advance the SALLY sales opportunity.
+
+Return ONLY a JSON object with this exact structure:
+
+{
+  "followUpActions": "- Action 1\\n- Action 2\\n- Action 3",
+  "informationGathering": "- Research 1\\n- Research 2\\n- Research 3",
+  "stakeholderEngagement": "- Stakeholder 1\\n- Stakeholder 2\\n- Stakeholder 3",
+  "proposalPreparation": "- Prep item 1\\n- Prep item 2\\n- Prep item 3",
+  "internalCoordination": "- Internal task 1\\n- Internal task 2\\n- Internal task 3",
+  "timelineManagement": "- Deadline 1\\n- Deadline 2\\n- Deadline 3"
+}`;
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: this.config.model,
+        temperature: this.config.temperature,
+        max_tokens: this.config.max_tokens,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ]
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new OpenAIError('No response content received from OpenAI');
+      }
+
+      return this.parsePostCallStepsResponse(content);
+    } catch (error) {
+      if (error instanceof OpenAIError) {
+        throw error;
+      }
+      throw new OpenAIError(`Post-call steps analysis failed: ${error.message}`);
+    }
+  }
+
 
 
   formatDiscoData(data) {
@@ -496,6 +657,49 @@ Return ONLY a JSON object with this exact structure:
       Challenges: formatField(data.Challenges),
       Objectives: formatField(data.Objectives)
     };
+  }
+
+  formatPostCallStepsData(data) {
+    const formatField = (field) => {
+      if (Array.isArray(field)) {
+        return field.join('\n');
+      }
+      return field || 'None yet';
+    };
+
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      return {
+        followUpActions: formatField(data.followUpActions),
+        informationGathering: formatField(data.informationGathering),
+        stakeholderEngagement: formatField(data.stakeholderEngagement),
+        proposalPreparation: formatField(data.proposalPreparation),
+        internalCoordination: formatField(data.internalCoordination),
+        timelineManagement: formatField(data.timelineManagement)
+      };
+    }
+    
+    return {
+      followUpActions: 'None yet',
+      informationGathering: 'None yet',
+      stakeholderEngagement: 'None yet',
+      proposalPreparation: 'None yet',
+      internalCoordination: 'None yet',
+      timelineManagement: 'None yet'
+    };
+  }
+
+  formatCustomerInfo(data) {
+    if (typeof data === 'object' && data !== null) {
+      const info = [];
+      if (data.company) info.push(`Company: ${data.company}`);
+      if (data.contact) info.push(`Contact: ${data.contact}`);
+      if (data.title) info.push(`Title: ${data.title}`);
+      if (data.email) info.push(`Email: ${data.email}`);
+      if (data.industry) info.push(`Industry: ${data.industry}`);
+      if (data.size) info.push(`Company Size: ${data.size}`);
+      return info.length > 0 ? info.join('\n') : 'No customer info provided';
+    }
+    return 'No customer info provided';
   }
 
   parseAiChatResponse(response) {
@@ -565,6 +769,28 @@ Return ONLY a JSON object with this exact structure:
     try {
       const parsed = JSON.parse(jsonMatch[0]);
       const requiredFields = ['Decision_Criteria', 'Impact', 'Situation', 'Challenges', 'Objectives'];
+      
+      for (const field of requiredFields) {
+        if (!parsed[field]) {
+          parsed[field] = 'None yet';
+        }
+      }
+      
+      return parsed;
+    } catch (error) {
+      throw new OpenAIError(`Failed to parse JSON: ${error.message}`);
+    }
+  }
+
+  parsePostCallStepsResponse(response) {
+    const jsonMatch = response.match(/\{.*\}/s);
+    if (!jsonMatch) {
+      throw new OpenAIError('Invalid JSON response from OpenAI');
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      const requiredFields = ['followUpActions', 'informationGathering', 'stakeholderEngagement', 'proposalPreparation', 'internalCoordination', 'timelineManagement'];
       
       for (const field of requiredFields) {
         if (!parsed[field]) {

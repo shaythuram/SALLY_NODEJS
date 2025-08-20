@@ -78,8 +78,25 @@ async function exampleUsage() {
     }
     console.log('');
 
-    // 5. Ephemeral Key Generation
-    console.log('5. Ephemeral Key Generation:');
+    // 5. Post-Call Steps Analysis
+    console.log('5. Post-Call Steps Analysis:');
+    const postCallStepsData = {
+      conversation: "salesperson: Thanks for the call today. We discussed implementing Sally for your sales team.\ncustomer: Yes, I need to discuss this with our IT team about security requirements and get approval from our VP of Sales.\nsalesperson: Perfect. I'll send you the security documentation. When would be a good time for a follow-up?\ncustomer: How about next Friday at 2 PM?"
+    };
+
+    try {
+      const postCallStepsResponse = await axios.post(
+        `${API_BASE_URL}/api/post-call-steps`,
+        postCallStepsData
+      );
+      console.log('✅ Post-Call Steps Analysis:', postCallStepsResponse.data);
+    } catch (error) {
+      console.log('❌ Post-Call Steps Analysis Error:', error.response?.data || error.message);
+    }
+    console.log('');
+
+    // 6. Ephemeral Key Generation
+    console.log('6. Ephemeral Key Generation:');
     const ephemeralKeyData = {
       voice: "alloy"
     };
@@ -95,8 +112,8 @@ async function exampleUsage() {
     }
     console.log('');
 
-    // 6. Error Handling Examples
-    console.log('6. Error Handling Examples:');
+    // 7. Error Handling Examples
+    console.log('7. Error Handling Examples:');
     
     // Missing required field
     try {
