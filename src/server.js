@@ -10,7 +10,7 @@ const ephemeralKeyRoutes = require('./routes/ephemeral-key');
 const postCallStepsRoutes = require('./routes/post-call-steps');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // Security middleware
 app.use(helmet());

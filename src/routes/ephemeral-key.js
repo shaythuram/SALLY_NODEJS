@@ -12,11 +12,11 @@ const openAIService = new OpenAIService();
  */
 router.post('/ephemeral-key', ephemeralKeyValidation, async (req, res, next) => {
   try {
-    const { voice = 'alloy' } = req.body;
+    const { voice = 'alloy', assistantId } = req.body;
     
     console.log(`🔑 Generating ephemeral key for voice: ${voice}`);
     
-    const result = await openAIService.generateEphemeralKey(voice);
+    const result = await openAIService.generateEphemeralKey(voice, assistantId);
     
     console.log(`✅ Ephemeral key generated successfully`);
     

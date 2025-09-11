@@ -12,17 +12,17 @@ const openAIService = new OpenAIService();
  */
 router.post('/generate-quick-answer', quickAnswerValidation, async (req, res, next) => {
   try {
-    const { ai_chat, user_query, conversation } = req.body;
+    const { ai_chat, user_query, conversation, assistantId } = req.body;
     
     let result;
     
     if (ai_chat === true) {
       console.log(`🤖 AI Chat mode - processing user query`);
-      result = await openAIService.aiChat(user_query);
+      result = await openAIService.aiChat(user_query, assistantId);
       console.log(`✅ AI chat response generated successfully` , result);
     } else {
       console.log(`📊 Quick Analysis mode - analyzing conversation`);
-      result = await openAIService.quickAnalysis(conversation);
+      result = await openAIService.quickAnalysis(conversation, assistantId);
       console.log(`✅ Quick analysis completed successfully`);
     }
     

@@ -12,11 +12,11 @@ const openAIService = new OpenAIService();
  */
 router.post('/analyze-disco', discoValidation, async (req, res, next) => {
   try {
-    const { conversation, context = {} } = req.body;
+    const { conversation, context = {}, assistantId } = req.body;
     
     
     
-    const result = await openAIService.analyzeDisco(conversation,  context);
+    const result = await openAIService.analyzeDisco(conversation, context, assistantId);
     
     console.log(`✅ DISCO analysis completed successfully` , result);
     

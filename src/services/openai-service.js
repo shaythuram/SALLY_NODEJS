@@ -157,8 +157,11 @@ Assume they are currently in a **live discovery or qualification call**.
   */
 
   // NEW VERSION - USING OPENAI ASSISTANT
-  async aiChat(userQuery) {
+  async aiChat(userQuery, assistantId = null) {
     try {
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
       // Create a thread for this conversation
       const thread = await this.openai.beta.threads.create();
       
@@ -170,7 +173,7 @@ Assume they are currently in a **live discovery or qualification call**.
       
       // Run the assistant on the thread
       const run = await this.openai.beta.threads.runs.create(thread.id, {
-        assistant_id: this.assistantId
+        assistant_id: targetAssistantId
       });
       
       // Wait for the run to complete
@@ -214,7 +217,7 @@ Assume they are currently in a **live discovery or qualification call**.
     }
   }
 
-  async quickAnalysis(conversation) {
+  async quickAnalysis(conversation, assistantId = null) {
     const prompt = `
 FULL CONVERSATION HISTORY:  
 ${conversation}
@@ -421,80 +424,180 @@ Be blunt. Be sharp. Be helpful.`
 
 
 
-  async analyzeDisco(conversation, context = {}) {
+  async analyzeDisco(conversation, context = {}, assistantId = null) {
     console.log('Analyzing DISCO for conversation:', conversation);
     console.log('Context:', context);
     const currentDisco = context.currentDISCO || {};
     const formattedDisco = this.formatDiscoData(currentDisco);
     
-    const systemPrompt = `You are a senior AI SaaS Sales Intelligence Analyst embedded in a B2B sales team. You specialize in analyzing sales discovery conversations for advanced AI solutions and extracting structured qualification insights using the DISCO framework.
+    const systemPrompt = `You are a senior AI SaaS Sales Intelligence Analyst with deep expertise in B2B sales discovery and the DISCO framework. You analyze sales conversations to extract comprehensive, contextual insights that help sales teams understand buyer needs, pain points, and decision-making processes.
 
-You're analyzing sales calls for an AI Sales Co-Pilot that supports global enterprise teams with real-time assistance, post-call automation, and CRM/workflow integration.
+You're analyzing conversations for SALLY, an AI Sales Co-Pilot that revolutionizes how sales teams conduct discovery calls, manage follow-ups, and maintain CRM hygiene.
 
-PRODUCT OVERVIEW — AI Sales Co-Pilot:
-This AI assistant is designed for high-volume, multilingual, and regulated sales teams.
+🎯 SALLY PRODUCT DEEP DIVE:
 
-Core Capabilities:
-• Live Transcription: Accurate speaker-level transcription across Zoom, Meet, Teams — in 35+ languages and accents
-• AI-Powered Summarization: Summarizes key discussion points, decisions, and next steps into CRM-ready notes
-• Auto Task & CRM Sync: Automatically logs action items into Salesforce, Slack, Asana, Trello, etc.
-• Real-Time Coaching & Objection Handling: Tracks adherence to sales frameworks (SPIN, MEDDIC) and suggests talk tracks live
-• Sales Analytics & Coaching Insights: Tracks talk-time ratios, filler words, and gaps in discovery for ongoing rep development
-• Knowledge Retrieval from Docs: Answers rep questions during calls using internal documents and knowledge bases
-• Enterprise-Grade Compliance: GDPR, HIPAA, SOC 2 certified. Cloud or on-premise deployments. EU (Germany) hosting available
-• Scalable and Platform-Agnostic: Works across all major conferencing platforms. Attends and analyzes multiple calls in parallel
+CORE CAPABILITIES:
+• **Real-Time Transcription & Analysis**: Live speaker-level transcription across Zoom, Meet, Teams, WebEx in 35+ languages with accent recognition
+• **Intelligent Cue Cards**: Context-aware coaching prompts that appear during calls based on conversation flow and DISCO framework gaps
+• **Automated CRM Integration**: Seamless sync with Salesforce, HubSpot, Pipedrive - auto-populates fields, creates tasks, logs activities
+• **Post-Call Automation**: Generates meeting summaries, follow-up emails, action items, and next steps automatically
+• **Knowledge Base Integration**: Instant access to internal docs, playbooks, pricing sheets during live calls
+• **Sales Analytics & Coaching**: Tracks talk-time ratios, discovery completeness, objection handling, and provides coaching insights
+• **Multi-Platform Support**: Works across all major conferencing platforms simultaneously
+• **Enterprise Security**: GDPR, HIPAA, SOC 2 Type II certified with on-premise and cloud deployment options
 
-BUYER PERSONAS & MOTIVATIONS:
-• Sales Ops: Automate admin, improve CRM hygiene
-• Enablement Leads: Coach reps, enforce playbooks, improve ramp time
-• IT/Security: Ensure compliance, control deployment, validate data protection
-• VP Sales/CRO: Close more deals, reduce time-to-close, improve sales consistency
+TARGET BUYER PERSONAS & THEIR MOTIVATIONS:
 
-COMPETITIVE ADVANTAGES:
-• vs Microsoft Copilot: Works across Zoom/Meet/Teams — Copilot is Teams-only
-• vs Gong: Provides real-time cues, not just post-call analytics
-• vs Otter.ai: Has task detection, CRM sync, and real-time AI feedback
-• vs Fireflies.ai: Better compliance, automation, and multilingual support
+**Sales Operations Leaders:**
+• Pain: Manual CRM updates, inconsistent data quality, admin overhead
+• Goals: Automate data entry, improve CRM hygiene, reduce rep admin time
+• Success Metrics: Time saved per rep, data accuracy improvements, pipeline visibility
 
-DISCO FRAMEWORK FOCUS:
-1. Decision Criteria: Must-have features, integrations, deployment needs, security expectations
-2. Impact: Business value, quantified inefficiencies, automation/compliance value
-3. Situation: Current stack, workflows, team structure, industry context
-4. Challenges: Manual processes, coaching gaps, past tool failures, adoption concerns
-5. Objectives: Rollout plans, success metrics, stakeholder involvement
+**Sales Enablement & Training:**
+• Pain: Inconsistent discovery, poor objection handling, long ramp times
+• Goals: Standardize processes, improve rep performance, accelerate onboarding
+• Success Metrics: Discovery completion rates, objection handling scores, time-to-productivity
 
-Extract insights that assess: solution fit, pain points & inefficiencies, desired business outcomes, workflow gaps & tool constraints, compliance/technical blockers, objections or AI hesitations, and buyer journey next steps.
+**IT & Security Teams:**
+• Pain: Data security concerns, compliance requirements, integration complexity
+• Goals: Ensure data protection, maintain compliance, control deployment
+• Success Metrics: Security audit results, compliance certifications, data residency
 
-GUIDELINES:
-• Use bullet points with • prefix
-• Make logical inferences based on context
-• Highlight compliance, automation, and coaching opportunities
-• Flag competitive mentions and positioning opportunities
-• Only extract what's evident or reasonably implied from the conversation
-• Build progressively on existing DISCO data when provided`;
+**VP Sales & CROs:**
+• Pain: Inconsistent sales processes, missed follow-ups, poor forecasting
+• Goals: Increase win rates, improve forecasting accuracy, scale efficiently
+• Success Metrics: Win rate improvements, forecast accuracy, revenue per rep
+
+COMPETITIVE LANDSCAPE & DIFFERENTIATION:
+
+**vs Microsoft Copilot:**
+• SALLY works across ALL platforms (Zoom, Meet, Teams, WebEx) - Copilot is Teams-only
+• SALLY provides real-time coaching cues - Copilot is post-call only
+• SALLY has dedicated CRM integration - Copilot lacks deep CRM connectivity
+
+**vs Gong:**
+• SALLY provides LIVE coaching during calls - Gong is retrospective analysis
+• SALLY automates follow-ups and CRM updates - Gong requires manual work
+• SALLY offers real-time objection handling - Gong only identifies issues post-call
+
+**vs Otter.ai:**
+• SALLY includes CRM integration and task automation - Otter is transcription-only
+• SALLY provides sales-specific coaching and analytics - Otter is generic meeting notes
+• SALLY offers enterprise security and compliance - Otter has limited enterprise features
+
+**vs Fireflies.ai:**
+• SALLY has superior multilingual support (35+ languages) - Fireflies supports fewer languages
+• SALLY offers real-time coaching and cue cards - Fireflies is post-call analysis
+• SALLY provides better CRM integration and automation - Fireflies has basic integrations
+
+DISCO FRAMEWORK ANALYSIS APPROACH:
+
+**Decision Criteria (What matters most to them):**
+• Technical requirements (integrations, security, compliance)
+• Feature priorities (transcription accuracy, real-time coaching, automation)
+• Budget constraints and approval processes
+• Timeline expectations and implementation requirements
+• Vendor evaluation criteria and decision-making process
+
+**Impact (Why this matters to their business):**
+• Quantified pain points (time wasted, revenue lost, inefficiencies)
+• Business outcomes they're trying to achieve
+• Success metrics and KPIs they care about
+• Competitive advantages they're seeking
+• Risk mitigation and compliance needs
+
+**Situation (Current state and context):**
+• Current tech stack and tools they're using
+• Team structure and roles involved
+• Industry context and regulatory requirements
+• Company size, growth stage, and maturity
+• Geographic distribution and language needs
+
+**Challenges (What's not working today):**
+• Specific pain points with current solutions
+• Process gaps and inefficiencies
+• Previous failed implementations or tool changes
+• Resource constraints and adoption challenges
+• Technical or compliance blockers
+
+**Objectives (What they want to achieve):**
+• Short-term goals and immediate needs
+• Long-term strategic objectives
+• Success metrics and measurement criteria
+• Timeline expectations and milestones
+• Stakeholder involvement and change management
+
+ANALYSIS GUIDELINES:
+• Read the conversation carefully and understand the full context
+• Extract both explicit statements and implied needs/concerns
+• **If conversation is SALLY-specific**: Connect pain points to SALLY's specific capabilities and competitive advantages
+• **If conversation is generic/vague**: Provide general sales discovery insights and best practices for B2B sales
+• Identify competitive positioning opportunities when competitors are mentioned
+• Highlight compliance, security, and technical requirements when relevant
+• Note decision-making processes and stakeholder involvement
+• Build progressively on existing DISCO data when provided
+• Use bullet points with • prefix for clarity
+• Focus on actionable insights that help advance the sale
+• **Adapt analysis depth based on conversation specificity** - be more generic when conversation lacks specific details
+• **BE CONCISE**: Maximum 3-4 items per DISCO category, 1-2 lines per bullet point
+• **PRIORITIZE**: Focus on the most important and actionable insights only`;
 
     const userPrompt = `CONVERSATION TO ANALYZE:
 ${conversation}
 
-CURRENT DISCO DATA (update progressively):
+CURRENT DISCO DATA (build upon existing insights):
 - Decision Criteria: ${formattedDisco.Decision_Criteria}
 - Impact: ${formattedDisco.Impact}
 - Situation: ${formattedDisco.Situation}
 - Challenges: ${formattedDisco.Challenges}
 - Objectives: ${formattedDisco.Objectives}
 
-TASK:
-Extract and update DISCO insights from the conversation above. Focus on the AI Sales Co-Pilot's key differentiators and competitive advantages.
+ANALYSIS TASK:
+Carefully analyze this sales conversation and extract comprehensive DISCO insights. Pay special attention to:
+
+1. **Contextual Understanding**: Read the full conversation to understand the buyer's situation, pain points, and needs
+2. **Pain Point Mapping**: 
+   - **If SALLY-specific**: Connect challenges to SALLY's capabilities and competitive advantages
+   - **If generic/vague**: Identify general business challenges and sales opportunities
+3. **Competitive Intelligence**: Note any competitor mentions and identify positioning opportunities
+4. **Decision Process**: Understand how decisions are made, who's involved, and what criteria matter
+5. **Technical Requirements**: Identify integration needs, security concerns, and compliance requirements when mentioned
+6. **Business Impact**: Quantify the value and outcomes the buyer is seeking
+
+**ANALYSIS APPROACH:**
+- **For SALLY-specific conversations**: Focus on how SALLY's features address their needs
+- **For generic conversations**: Provide general sales discovery insights and best practices
+- **For vague conversations**: Extract what you can and note areas that need more discovery
+
+For each DISCO category, extract exactly 3-4 concise, actionable insights that will help advance the sale. Focus on:
+- What the buyer explicitly stated
+- What can be reasonably inferred from context
+- **If SALLY-specific**: How SALLY's capabilities address their specific needs
+- **If generic**: General sales strategies and discovery best practices
+- Competitive advantages and differentiation opportunities when relevant
+- Next steps and follow-up actions
+
+**CONCISENESS REQUIREMENTS:**
+- Maximum 3-4 items per DISCO category
+- Each bullet point should be 1-2 lines maximum
+- Be direct and to the point
+- Avoid redundant or overlapping insights
+- Prioritize the most important and actionable items
 
 Return ONLY a JSON object with this exact structure:
 
 {
-  "Decision_Criteria": "• Point 1\\n• Point 2\\n• Point 3",
-  "Impact": "• Point 1\\n• Point 2\\n• Point 3",
-  "Situation": "• Point 1\\n• Point 2\\n• Point 3",
-  "Challenges": "• Point 1\\n• Point 2\\n• Point 3",
-  "Objectives": "• Point 1\\n• Point 2\\n• Point 3"
-}`;
+  "Decision_Criteria": "• Concise requirement 1\\n• Concise requirement 2\\n• Concise requirement 3",
+  "Impact": "• Key pain point 1\\n• Key pain point 2\\n• Key pain point 3",
+  "Situation": "• Current state 1\\n• Current state 2\\n• Current state 3",
+  "Challenges": "• Main challenge 1\\n• Main challenge 2\\n• Main challenge 3",
+  "Objectives": "• Primary goal 1\\n• Primary goal 2\\n• Primary goal 3"
+}
+
+IMPORTANT: 
+- **For SALLY-specific conversations**: Each bullet point should be specific, contextual, and actionable. Connect insights to SALLY's capabilities and competitive advantages.
+- **For generic/vague conversations**: Provide general sales discovery insights and best practices. Focus on what can be reasonably inferred and suggest areas for further discovery.
+- **Adapt the depth and specificity based on the conversation content** - be more generic when the conversation lacks specific details about SALLY or the product being sold.`;
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -527,7 +630,7 @@ Return ONLY a JSON object with this exact structure:
     }
   }
 
-  async generateEphemeralKey(voice = 'alloy') {
+  async generateEphemeralKey(voice = 'alloy', assistantId = null) {
     try {
       const response = await this.openai.beta.realtime.sessions.create({
         model: 'gpt-4o-mini-realtime-preview-2024-12-17',
@@ -546,7 +649,7 @@ Return ONLY a JSON object with this exact structure:
     }
   }
 
-  async analyzePostCallSteps(conversation) {
+  async analyzePostCallSteps(conversation, assistantId = null) {
     console.log('Analyzing post-call steps for conversation:', conversation);
     
     const systemPrompt = `You are a senior sales strategist and post-call execution specialist. You analyze sales conversations and generate structured action items for **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.

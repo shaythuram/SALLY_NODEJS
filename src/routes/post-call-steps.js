@@ -12,11 +12,11 @@ const openAIService = new OpenAIService();
  */
 router.post('/post-call-steps', postCallStepsValidation, async (req, res, next) => {
   try {
-    const { conversation } = req.body;
+    const { conversation, assistantId } = req.body;
     
     console.log(`📋 Analyzing post-call steps for conversation`);
     
-    const result = await openAIService.analyzePostCallSteps(conversation);
+    const result = await openAIService.analyzePostCallSteps(conversation, assistantId);
     
     console.log(`✅ Post-call steps analysis completed successfully`, result);
     

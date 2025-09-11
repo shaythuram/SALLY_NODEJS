@@ -38,6 +38,12 @@ const quickAnswerValidation = [
     .isLength({ max: 10000 })
     .withMessage('The conversation field must not exceed 10000 characters.'),
   
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
+  
   handleValidationErrors
 ];
 
@@ -143,6 +149,12 @@ const discoValidation = [
     })
     .withMessage('The Objectives field must be a string or array.'),
   
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
+  
   handleValidationErrors
 ];
 
@@ -152,6 +164,12 @@ const ephemeralKeyValidation = [
     .trim()
     .isIn(['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'])
     .withMessage('The voice field must be one of: alloy, echo, fable, onyx, nova, shimmer.'),
+  
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
   
   handleValidationErrors
 ];
@@ -163,6 +181,12 @@ const postCallStepsValidation = [
     .withMessage('The conversation field is required.')
     .isLength({ max: 10000 })
     .withMessage('The conversation field must not exceed 10000 characters.'),
+  
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
   
   handleValidationErrors
 ];
