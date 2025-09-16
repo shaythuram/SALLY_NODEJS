@@ -1,24 +1,24 @@
 const express = require('express');
 const { OpenAIService } = require('../services/openai-service');
-const { postCallStepsValidation } = require('../middleware/validation');
+const { aiSummaryValidation } = require('../middleware/validation');
 
 const router = express.Router();
 const openAIService = new OpenAIService();
 
 /**
- * @route POST /api/post-call-steps
- * @desc Generate post-call action items and next steps
+ * @route POST /api/ai-summary
+ * @desc Generate comprehensive yet succinct call summary
  * @access Public
  */
-router.post('/post-call-steps', postCallStepsValidation, async (req, res, next) => {
+router.post('/ai-summary', aiSummaryValidation, async (req, res, next) => {
   try {
     const { conversation, discoAnalysis, genieSupport, assistantId, threadId } = req.body;
     
-    console.log(`📋 Analyzing comprehensive post-call steps`);
+    console.log(`📝 Generating comprehensive AI summary`);
     console.log(`📊 DISCO Analysis provided:`, !!discoAnalysis);
     console.log(`🧞 Genie Support provided:`, !!genieSupport);
     
-    const result = await openAIService.analyzePostCallSteps(
+    const result = await openAIService.generateAISummary(
       conversation, 
       assistantId, 
       threadId, 
@@ -26,11 +26,11 @@ router.post('/post-call-steps', postCallStepsValidation, async (req, res, next) 
       genieSupport
     );
     
-    console.log(`✅ Comprehensive post-call steps analysis completed successfully`);
+    console.log(`✅ Comprehensive AI summary generated successfully`);
     
     res.json(result);
   } catch (error) {
-    console.error('❌ Post-call steps analysis error:', error);
+    console.error('❌ AI summary generation error:', error);
     next(error);
   }
 });

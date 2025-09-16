@@ -551,6 +551,205 @@ Based on your knowledge and any available context, provide DISCO analysis with e
     }
   }
 
+  async generateAISummary(conversation, assistantId = null, threadId = null, discoAnalysis = null, genieSupport = null) {
+    console.log('Generating comprehensive AI summary for conversation');
+    
+    try {
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
+      }
+      
+      // Format additional context
+      const discoContext = discoAnalysis ? `
+DISCO ANALYSIS:
+- Decision Criteria: ${discoAnalysis.decision_criteria || 'Not provided'}
+- Impact: ${discoAnalysis.impact || 'Not provided'}
+- Situation: ${discoAnalysis.situation || 'Not provided'}
+- Challenges: ${discoAnalysis.challenges || 'Not provided'}
+- Objectives: ${discoAnalysis.objectives || 'Not provided'}` : '';
+
+      const genieContext = genieSupport ? `
+GENIE SUPPORT CONTEXT:
+Live Analysis: ${genieSupport.live_analysis ? genieSupport.live_analysis.map(item => `- ${item.content || item} (${item.type || 'analysis'})`).join('\n') : 'None provided'}
+AI Chat Q&A: ${genieSupport.ai_chat_qna ? genieSupport.ai_chat_qna.map(qna => `- Q: ${qna.question}\n  A: ${qna.answer} (${qna.timestamp || 'no timestamp'})`).join('\n') : 'None provided'}` : '';
+      
+      // Add the comprehensive summary request to the thread
+      await this.openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `Generate a comprehensive yet succinct summary of this conversation. The summary should capture the key points, outcomes, and context in a clear, professional format.
+
+CONVERSATION:
+${conversation}
+${discoContext}
+${genieContext}
+
+Based on your knowledge, the conversation context, DISCO analysis, and genie support data, provide a well-structured summary in this JSON format:
+
+{
+  "summary": {
+    "overview": "[2-3 sentence high-level overview of the call]",
+    "keyPoints": [
+      "- Key point 1",
+      "- Key point 2", 
+      "- Key point 3"
+    ],
+    "outcomes": [
+      "- Outcome/decision 1",
+      "- Outcome/decision 2"
+    ],
+   
+  }
+}
+
+The summary should be:
+- Comprehensive: Cover all important aspects discussed
+- Succinct: Keep each section concise and focused
+- Professional: Use clear, business-appropriate language
+- Actionable: Include concrete outcomes and next steps
+
+If no valuable insights can be extracted, respond with "No valuable insights available".`
+      });
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(thread.id, {
+        assistant_id: targetAssistantId
+      });
+      
+      // Wait for the run to complete
+      let runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      }
+      
+      if (runStatus.status === 'failed') {
+        throw new OpenAIError(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      if (runStatus.status === 'cancelled') {
+        throw new OpenAIError('Assistant run was cancelled');
+      }
+      
+      // Get the messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(thread.id);
+      
+      // Find the assistant's response (the most recent message from the assistant)
+      const assistantMessage = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      
+      if (!assistantMessage || !assistantMessage.content || assistantMessage.content.length === 0) {
+        throw new OpenAIError('No response received from assistant');
+      }
+      
+      const content = assistantMessage.content[0].text.value;
+      
+      return this.parseAISummaryResponse(content);
+    } catch (error) {
+      if (error instanceof OpenAIError) {
+        throw error;
+      }
+      throw new OpenAIError(`AI summary generation failed: ${error.message}`);
+    }
+  }
+
+  async completeActionItem(actionItem, assistantId = null, threadId = null) {
+    console.log('Processing action item completion:', actionItem);
+    
+    try {
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
+      }
+      
+      // Step 1: Analyze the action item to determine content type
+      await this.openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `Analyze this action item and determine what type of content should be created, then generate that content in markdown format.
+
+ACTION ITEM: ${actionItem}
+
+First, determine which type of content this action item requires:
+- "Email" - if it involves sending correspondence, follow-ups, introductions, or communication
+- "Report" - if it involves analysis, summaries, findings, or structured documentation  
+- "Answer" - if it involves responding to questions, providing explanations, or giving advice
+- "Powerpoint" - if it involves presentations, proposals, slides, or visual materials
+
+Then, create the appropriate content in markdown format based on your determination.
+
+Respond in this exact JSON format:
+{
+  "content": "[Generated content in markdown format - be comprehensive and professional]",
+  "tag": "Email" | "Report" | "Answer" | "Powerpoint"
+}
+
+Guidelines for each type:
+- Email: Include subject line, greeting, body, and professional closing
+- Report: Include title, executive summary, main sections, and conclusions
+- Answer: Provide clear, structured response with explanations and examples
+- Powerpoint: Create slide-by-slide content with titles and bullet points
+
+Make the content detailed, professional, and directly address the action item requirements.`
+      });
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(thread.id, {
+        assistant_id: targetAssistantId
+      });
+      
+      // Wait for the run to complete
+      let runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      }
+      
+      if (runStatus.status === 'failed') {
+        throw new OpenAIError(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      if (runStatus.status === 'cancelled') {
+        throw new OpenAIError('Assistant run was cancelled');
+      }
+      
+      // Get the messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(thread.id);
+      
+      // Find the assistant's response (the most recent message from the assistant)
+      const assistantMessage = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      
+      if (!assistantMessage || !assistantMessage.content || assistantMessage.content.length === 0) {
+        throw new OpenAIError('No response received from assistant');
+      }
+      
+      const content = assistantMessage.content[0].text.value;
+      
+      return this.parseAICompleteResponse(content);
+    } catch (error) {
+      if (error instanceof OpenAIError) {
+        throw error;
+      }
+      throw new OpenAIError(`AI complete failed: ${error.message}`);
+    }
+  }
+
   async generateEphemeralKey(voice = 'alloy', assistantId = null) {
     try {
       const response = await this.openai.beta.realtime.sessions.create({
@@ -570,69 +769,9 @@ Based on your knowledge and any available context, provide DISCO analysis with e
     }
   }
 
-  async analyzePostCallSteps(conversation, assistantId = null, threadId = null) {
-    console.log('Analyzing post-call steps for conversation:', conversation);
+  async analyzePostCallSteps(conversation, assistantId = null, threadId = null, discoAnalysis = null, genieSupport = null) {
+    console.log('Analyzing comprehensive post-call steps for conversation');
     
-    const systemPrompt = `You are a senior sales strategist and post-call execution specialist. You analyze sales conversations and generate structured action items for **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.
-
-SALLY PRODUCT OVERVIEW:
-SALLY is a real-time AI sales assistant designed to:
-- Capture and structure live sales calls
-- Reduce manual note-taking (saves ~4–5 hrs/week/rep)
-- Automate follow-ups, emails, tasks, and CRM updates
-- Provide real-time objection handling and cue cards
-- Pull instant answers from internal docs or knowledge base
-- Generate summaries, next steps, and action items post-call
-
-💼 SALLY Integrates With:
-- **CRMs**: Salesforce, HubSpot
-- **Collaboration**: Zoom, Meet, Teams, WebEx, Slack
-- **Storage**: Microsoft 365, Google Drive
-
-📦 DEPLOYMENT
-- Works in cloud or on-prem
-- Fully GDPR, HIPAA, SOC-2 Type II compliant
-- Offers data residency options (e.g., EU/Germany hosting)
-
-🌍 GLOBAL-READY
-- Real-time multilingual support (35+ languages)
-- Perfect for regional or multinational sales teams
-
-POST-CALL STEPS CATEGORIES:
-1. **Follow-up Actions**: Immediate actions to maintain momentum
-2. **Information Gathering**: Research and data collection needed
-3. **Stakeholder Engagement**: People to connect with or involve
-4. **Proposal/Demo Preparation**: Next meeting or presentation prep
-5. **Internal Coordination**: Team alignment and resource planning
-6. **Timeline Management**: Key dates and deadlines to track
-
-GUIDELINES:
-• Use markdown bullet points with - prefix
-• Be specific and actionable  
-• Include deadlines when mentioned or implied
-• Prioritize by urgency and impact
-• Reference specific conversation points
-• Focus on advancing the sales process
-• Each bullet point should be concise and actionable
-• Use proper markdown formatting in the JSON strings`;
-
-    const userPrompt = `CONVERSATION TO ANALYZE:
-${conversation}
-
-TASK:
-Extract post-call action items from the conversation above. Focus on concrete next steps that will advance the SALLY sales opportunity.
-
-Return ONLY a JSON object with this exact structure:
-
-{
-  "followUpActions": "- Action 1\\n- Action 2\\n- Action 3",
-  "informationGathering": "- Research 1\\n- Research 2\\n- Research 3",
-  "stakeholderEngagement": "- Stakeholder 1\\n- Stakeholder 2\\n- Stakeholder 3",
-  "proposalPreparation": "- Prep item 1\\n- Prep item 2\\n- Prep item 3",
-  "internalCoordination": "- Internal task 1\\n- Internal task 2\\n- Internal task 3",
-  "timelineManagement": "- Deadline 1\\n- Deadline 2\\n- Deadline 3"
-}`;
-
     try {
       // Use provided assistantId or default
       const targetAssistantId = assistantId || this.assistantId;
@@ -645,23 +784,48 @@ Return ONLY a JSON object with this exact structure:
         thread = await this.openai.beta.threads.create();
       }
       
-      // Add the post-call steps analysis request to the thread
+      // Format additional context
+      const discoContext = discoAnalysis ? `
+DISCO ANALYSIS:
+- Decision Criteria: ${discoAnalysis.decision_criteria || 'Not provided'}
+- Impact: ${discoAnalysis.impact || 'Not provided'}
+- Situation: ${discoAnalysis.situation || 'Not provided'}
+- Challenges: ${discoAnalysis.challenges || 'Not provided'}
+- Objectives: ${discoAnalysis.objectives || 'Not provided'}` : '';
+
+      const genieContext = genieSupport ? `
+GENIE SUPPORT CONTEXT:
+Live Analysis: ${genieSupport.live_analysis ? genieSupport.live_analysis.map(item => `- ${item.content || item} (${item.type || 'analysis'})`).join('\n') : 'None provided'}
+AI Chat Q&A: ${genieSupport.ai_chat_qna ? genieSupport.ai_chat_qna.map(qna => `- Q: ${qna.question}\n  A: ${qna.answer} (${qna.timestamp || 'no timestamp'})`).join('\n') : 'None provided'}` : '';
+      
+      // Add the comprehensive post-call steps analysis request to the thread
       await this.openai.beta.threads.messages.create(thread.id, {
         role: 'user',
-        content: `Analyze this conversation and extract follow-up action items:
+        content: `Analyze this conversation comprehensively and provide exactly 6 in-depth post-call action items focusing on:
+
+1) Closing loose ends from the call (emails promised, questions to answer, commitments made)
+2) Following up on seller commitments (things I said I would do post-call)
+3) Proactive opportunities to enhance the experience (strategic emails, additional value, relationship building)
 
 CONVERSATION:
 ${conversation}
+${discoContext}
+${genieContext}
 
-Based on your knowledge and any available context, provide exactly 3 follow-up steps per category. If no valuable insights can be extracted, respond with "No valuable insights available":
+Based on your knowledge, the conversation context, DISCO analysis, and genie support data, provide 6 specific, actionable post-call items in this JSON format:
+
 {
-  "followUpActions": "- Action 1\\n- Action 2\\n- Action 3",
-  "informationGathering": "- Research 1\\n- Research 2\\n- Research 3",
-  "stakeholderEngagement": "- Contact 1\\n- Contact 2\\n- Contact 3",
-  "proposalPreparation": "- Prep 1\\n- Prep 2\\n- Prep 3",
-  "internalCoordination": "- Task 1\\n- Task 2\\n- Task 3",
-  "timelineManagement": "- Deadline 1\\n- Deadline 2\\n- Deadline 3"
-}`
+  "actionItems": [
+    "1. [Specific action with clear next step and rationale]",
+    "2. [Specific action with clear next step and rationale]", 
+    "3. [Specific action with clear next step and rationale]",
+    "4. [Specific action with clear next step and rationale]",
+    "5. [Specific action with clear next step and rationale]",
+    "6. [Specific action with clear next step and rationale]"
+  ]
+}
+
+Each action item should be detailed, specific, and directly tied to something from the conversation, DISCO analysis, or genie support context. If no valuable insights can be extracted, respond with "No valuable insights available".`
       });
       
       // Run the assistant on the thread
@@ -889,49 +1053,165 @@ Based on your knowledge and any available context, provide exactly 3 follow-up s
     // Handle "No valuable insights available" case
     if (response.includes('No valuable insights available')) {
       return {
-        followUpActions: 'No valuable insights available',
-        informationGathering: 'No valuable insights available',
-        stakeholderEngagement: 'No valuable insights available',
-        proposalPreparation: 'No valuable insights available',
-        internalCoordination: 'No valuable insights available',
-        timelineManagement: 'No valuable insights available'
+        actionItems: ['No valuable insights available']
       };
     }
 
     // Try to extract JSON from response
     const jsonMatch = response.match(/\{.*\}/s);
     if (!jsonMatch) {
-      // If no JSON found, return default structure
+      // If no JSON found, try to extract numbered points from response
+      const numberedPoints = response.match(/\d+\.\s+[^\n]+/g);
+      if (numberedPoints && numberedPoints.length > 0) {
+        return {
+          actionItems: numberedPoints.slice(0, 6) // Take up to 6 items
+        };
+      }
+      
+      // If no structure found, return default
       return {
-        followUpActions: response.trim() || 'None yet',
-        informationGathering: 'None yet',
-        stakeholderEngagement: 'None yet',
-        proposalPreparation: 'None yet',
-        internalCoordination: 'None yet',
-        timelineManagement: 'None yet'
+        actionItems: [response.trim() || 'None yet']
       };
     }
 
     try {
       const parsed = JSON.parse(jsonMatch[0]);
-      const requiredFields = ['followUpActions', 'informationGathering', 'stakeholderEngagement', 'proposalPreparation', 'internalCoordination', 'timelineManagement'];
       
-      for (const field of requiredFields) {
-        if (!parsed[field]) {
-          parsed[field] = 'None yet';
-        }
+      // Handle new format with actionItems array
+      if (parsed.actionItems && Array.isArray(parsed.actionItems)) {
+        return {
+          actionItems: parsed.actionItems.slice(0, 6) // Ensure max 6 items
+        };
       }
       
-      return parsed;
-    } catch (error) {
-      // If JSON parsing fails, return default structure
+      // Handle legacy format and convert to new format
+      if (parsed.followUpActions || parsed.informationGathering) {
+        const actionItems = [];
+        const fields = ['followUpActions', 'informationGathering', 'stakeholderEngagement', 'proposalPreparation', 'internalCoordination', 'timelineManagement'];
+        
+        fields.forEach((field, index) => {
+          if (parsed[field] && parsed[field] !== 'None yet') {
+            actionItems.push(`${index + 1}. ${parsed[field]}`);
+          }
+        });
+        
+        return {
+          actionItems: actionItems.length > 0 ? actionItems : ['None yet']
+        };
+      }
+      
       return {
-        followUpActions: response.trim() || 'None yet',
-        informationGathering: 'None yet',
-        stakeholderEngagement: 'None yet',
-        proposalPreparation: 'None yet',
-        internalCoordination: 'None yet',
-        timelineManagement: 'None yet'
+        actionItems: [response.trim() || 'None yet']
+      };
+      
+    } catch (error) {
+      // If JSON parsing fails, try to extract numbered points
+      const numberedPoints = response.match(/\d+\.\s+[^\n]+/g);
+      if (numberedPoints && numberedPoints.length > 0) {
+        return {
+          actionItems: numberedPoints.slice(0, 6)
+        };
+      }
+      
+      return {
+        actionItems: [response.trim() || 'None yet']
+      };
+    }
+  }
+
+  parseAISummaryResponse(response) {
+    // Handle "No valuable insights available" case
+    if (response.includes('No valuable insights available')) {
+      return {
+        summary: {
+          overview: 'No valuable insights available',
+          keyPoints: [],
+          outcomes: [],
+          nextSteps: []
+        }
+      };
+    }
+
+    // Try to extract JSON from response
+    const jsonMatch = response.match(/\{.*\}/s);
+    if (!jsonMatch) {
+      // If no JSON found, create structured response from text
+      return {
+        summary: {
+          overview: response.trim() || 'No summary available',
+          keyPoints: [],
+          outcomes: [],
+          nextSteps: []
+        }
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Handle nested summary structure
+      if (parsed.summary) {
+        return {
+          summary: {
+            overview: parsed.summary.overview || 'No overview available',
+            keyPoints: Array.isArray(parsed.summary.keyPoints) ? parsed.summary.keyPoints : [],
+            outcomes: Array.isArray(parsed.summary.outcomes) ? parsed.summary.outcomes : [],
+            nextSteps: Array.isArray(parsed.summary.nextSteps) ? parsed.summary.nextSteps : []
+          }
+        };
+      }
+      
+      // Handle flat structure
+      return {
+        summary: {
+          overview: parsed.overview || response.trim() || 'No overview available',
+          keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : [],
+          outcomes: Array.isArray(parsed.outcomes) ? parsed.outcomes : [],
+          nextSteps: Array.isArray(parsed.nextSteps) ? parsed.nextSteps : []
+        }
+      };
+      
+    } catch (error) {
+      // If JSON parsing fails, return text as overview
+      return {
+        summary: {
+          overview: response.trim() || 'No summary available',
+          keyPoints: [],
+          outcomes: [],
+          nextSteps: []
+        }
+      };
+    }
+  }
+
+  parseAICompleteResponse(response) {
+    // Try to extract JSON from response
+    const jsonMatch = response.match(/\{.*\}/s);
+    if (!jsonMatch) {
+      // If no JSON found, assume it's an Answer and return the content
+      return {
+        content: response.trim() || 'No content generated',
+        tag: 'Answer'
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      // Validate the tag is one of the allowed values
+      const allowedTags = ['Email', 'Report', 'Answer', 'Powerpoint'];
+      const tag = allowedTags.includes(parsed.tag) ? parsed.tag : 'Answer';
+      
+      return {
+        content: parsed.content || response.trim() || 'No content generated',
+        tag: tag
+      };
+      
+    } catch (error) {
+      // If JSON parsing fails, return the response as Answer content
+      return {
+        content: response.trim() || 'No content generated',
+        tag: 'Answer'
       };
     }
   }

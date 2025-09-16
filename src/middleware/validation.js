@@ -191,8 +191,144 @@ const postCallStepsValidation = [
     .trim()
     .notEmpty()
     .withMessage('The conversation field is required.')
-    .isLength({ max: 10000 })
-    .withMessage('The conversation field must not exceed 10000 characters.'),
+    .isLength({ max: 15000 })
+    .withMessage('The conversation field must not exceed 15000 characters.'),
+  
+  body('discoAnalysis')
+    .optional()
+    .isObject()
+    .withMessage('The discoAnalysis field must be an object.'),
+  
+  body('discoAnalysis.decision_criteria')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.decision_criteria field must be a string.'),
+  
+  body('discoAnalysis.impact')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.impact field must be a string.'),
+  
+  body('discoAnalysis.situation')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.situation field must be a string.'),
+  
+  body('discoAnalysis.challenges')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.challenges field must be a string.'),
+  
+  body('discoAnalysis.objectives')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.objectives field must be a string.'),
+  
+  body('genieSupport')
+    .optional()
+    .isObject()
+    .withMessage('The genieSupport field must be an object.'),
+  
+  body('genieSupport.live_analysis')
+    .optional()
+    .isArray()
+    .withMessage('The genieSupport.live_analysis field must be an array.'),
+  
+  body('genieSupport.ai_chat_qna')
+    .optional()
+    .isArray()
+    .withMessage('The genieSupport.ai_chat_qna field must be an array.'),
+  
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
+  
+  body('threadId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The threadId field must be a string.'),
+  
+  handleValidationErrors
+];
+
+const aiSummaryValidation = [
+  body('conversation')
+    .trim()
+    .notEmpty()
+    .withMessage('The conversation field is required.')
+    .isLength({ max: 15000 })
+    .withMessage('The conversation field must not exceed 15000 characters.'),
+  
+  body('discoAnalysis')
+    .optional()
+    .isObject()
+    .withMessage('The discoAnalysis field must be an object.'),
+  
+  body('discoAnalysis.decision_criteria')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.decision_criteria field must be a string.'),
+  
+  body('discoAnalysis.impact')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.impact field must be a string.'),
+  
+  body('discoAnalysis.situation')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.situation field must be a string.'),
+  
+  body('discoAnalysis.challenges')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.challenges field must be a string.'),
+  
+  body('discoAnalysis.objectives')
+    .optional()
+    .isString()
+    .withMessage('The discoAnalysis.objectives field must be a string.'),
+  
+  body('genieSupport')
+    .optional()
+    .isObject()
+    .withMessage('The genieSupport field must be an object.'),
+  
+  body('genieSupport.live_analysis')
+    .optional()
+    .isArray()
+    .withMessage('The genieSupport.live_analysis field must be an array.'),
+  
+  body('genieSupport.ai_chat_qna')
+    .optional()
+    .isArray()
+    .withMessage('The genieSupport.ai_chat_qna field must be an array.'),
+  
+  body('assistantId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The assistantId field must be a string.'),
+  
+  body('threadId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The threadId field must be a string.'),
+  
+  handleValidationErrors
+];
+
+const aiCompleteValidation = [
+  body('action_item')
+    .trim()
+    .notEmpty()
+    .withMessage('The action_item field is required.')
+    .isLength({ max: 5000 })
+    .withMessage('The action_item field must not exceed 5000 characters.'),
   
   body('assistantId')
     .optional()
@@ -214,5 +350,7 @@ module.exports = {
   discoValidation,
   ephemeralKeyValidation,
   postCallStepsValidation,
+  aiSummaryValidation,
+  aiCompleteValidation,
   ValidationError
 }; 
