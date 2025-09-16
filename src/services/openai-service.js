@@ -157,13 +157,18 @@ Assume they are currently in a **live discovery or qualification call**.
   */
 
   // NEW VERSION - USING OPENAI ASSISTANT
-  async aiChat(userQuery, assistantId = null) {
+  async aiChat(userQuery, assistantId = null, threadId = null) {
     try {
       // Use provided assistantId or default
       const targetAssistantId = assistantId || this.assistantId;
       
-      // Create a thread for this conversation
-      const thread = await this.openai.beta.threads.create();
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
+      }
       
       // Add the user's message to the thread
       await this.openai.beta.threads.messages.create(thread.id, {
@@ -217,202 +222,68 @@ Assume they are currently in a **live discovery or qualification call**.
     }
   }
 
-  async quickAnalysis(conversation, assistantId = null) {
-    const prompt = `
-FULL CONVERSATION HISTORY:  
+  async quickAnalysis(conversation, assistantId = null, threadId = null) {
+    try {
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
+      }
+      
+      // Add the conversation analysis request to the thread
+      await this.openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `Analyze this conversation and provide exactly 3 coaching insights. If no valuable insights can be extracted, respond with "No valuable insights available":
+
+CONVERSATION:
 ${conversation}
 
----
-
-🔍 YOUR TASK
-
-You are a sales strategist analyzing this sales conversation. Extract **3–5 sharp coaching tips** to help the seller pitch **SALLY**, the AI Sales Co-Pilot, more effectively next time.
-
-🎯 SALLY SNAPSHOT (for reference):
-- AI assistant for B2B sales teams
-- Real-time transcription + cue cards across Zoom, Meet, Teams, WebEx
-- Live answers from internal docs during calls
-- Auto-generates summaries, follow-ups, tasks, and CRM sync
-- Integrates with Salesforce, HubSpot, Google Drive, Slack
-- Supports both on-premise and cloud
-- SOC-2 Type II, GDPR, HIPAA compliant with EU hosting
-- 35+ language support for global orgs
-- Beats Gong, Otter, Fireflies with real-time coaching + automation
-
----
-
-🧠 Focus areas:
-- Missed pain tie-ins (e.g. admin time, follow-up gaps, inconsistent CRM hygiene)
-- Poor objection handling (e.g. AI presence, compliance, IT pushback)
-- Weak feature→impact mapping (e.g. cue cards = consistency; doc search = faster objection handling)
-- Missed upsell cues (CS, HR, multilingual teams, security)
-- Weak competitive positioning (e.g. Gong = post-call; Sally = live coaching)
-
----
-
-✏️ OUTPUT FORMAT
-
-Return ONLY the following JSON:
-
-\`\`\`json
+Based on your knowledge and any available context, provide coaching insights in JSON format:
 {
-  "analysis": "- Tip 1\\n- Tip 2\\n- Tip 3\\n- Tip 4\\n- Tip 5"
-}
-\`\`\`
-
-🎯 RULES:
-- 3–5 tips total
-- Each bullet = ≤15 words
-- Use markdown dash format (- Tip)
-- Push the deal forward — don’t repeat what happened
-- Be tactical, clear, and sharp — no fluff
-- Output must be under 120 words
-
----
-
-📌 EXAMPLES (copy this tone + structure):
-
-Input:
-Call mentioned Gong didn’t integrate with CRM. Buyer unsure about AI in meetings.
-
-Output:
-\`\`\`json
-{
-  "analysis": "- Tie CRM sync to Gong gap\\n- Reassure AI presence with silent observer mode\\n- Emphasize on-prem hosting option\\n- Ask if CS faces same CRM pain\\n- Reinforce cue cards for message consistency"
-}
-\`\`\`
-
----
-
-Input:
-Rep pitched features well but ignored ROI questions and multilingual/global expansion.
-
-Output:
-\`\`\`json
-{
-  "analysis": "- Quantify 4–5 hrs/week saved\\n- Mention EU-hosting for GDPR\\n- Ask about language support needs\\n- Push CRM sync to show revenue impact\\n- Explore CS/Marketing team use cases"
-}
-\`\`\`
-
----
-
-Input:
-Rep focused on features but didn’t show impact. Missed coaching and security hooks.
-
-Output:
-\`\`\`json
-{
-  "analysis": "- Connect cue cards to pipeline consistency\\n- Highlight GDPR + HIPAA compliance for IT\\n- Ask about CS onboarding needs\\n- Reinforce multilingual support\\n- Pitch skill heatmaps for rep coaching"
-}
-\`\`\`
-
----
-
-Now analyze the conversation above.
-
-Output ONLY the final JSON. No explanation.
-`
-
-
-
-    ;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: this.config.model,
-        temperature: this.config.temperature,
-        max_tokens: this.config.max_tokens,
-        messages: [
-          {
-            role: 'system',
-            content: 
-            `
-   You are a senior sales strategist and enterprise SaaS call coach. You are coaching reps selling **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.
-
----
-
-🧠 YOU KNOW SALLY INSIDE OUT.
-
-SALLY is a real-time AI sales assistant designed to:
-- Capture and structure live sales calls
-- Reduce manual note-taking (saves ~4–5 hrs/week/rep)
-- Automate follow-ups, emails, tasks, and CRM updates
-- Provide real-time objection handling and cue cards
-- Pull instant answers from internal docs or knowledge base
-- Generate summaries, next steps, and action items post-call
-
-💼 SALLY Integrates With:
-- **CRMs**: Salesforce, HubSpot
-- **Collaboration**: Zoom, Meet, Teams, WebEx, Slack
-- **Storage**: Microsoft 365, Google Drive
-
-📦 DEPLOYMENT
-- Works in cloud or on-prem
-- Fully GDPR, HIPAA, SOC-2 Type II compliant
-- Offers data residency options (e.g., EU/Germany hosting)
-
-🌍 GLOBAL-READY
-- Real-time multilingual support (35+ languages)
-- Perfect for regional or multinational sales teams
-
-💸 PRICING
-- Starter (Free): 5 calls/month
-- Growth ($35/user/mo): Advanced cue cards, CRM sync, heatmaps
-- Custom (Enterprise): On-prem, playbooks, analytics, SLA
-
----
-
-🔎 WHO BUYS SALLY?
-
-- **Sales Ops**: Wants CRM consistency and admin reduction
-- **RevOps & Enablement**: Cares about ramp time, coaching, playbook adherence
-- **IT & Security**: Needs GDPR/HIPAA, data control, deployment flexibility
-- **CROs/VP Sales**: Want revenue with less rep effort
-
----
-
-🧨 COMPETITOR EDGE
-
-| Tool         | Sally Advantage                                                    |
-|--------------|---------------------------------------------------------------------|
-| Gong         | Gong is post-call; Sally coaches **live** with smart cue cards     |
-| Otter.ai     | Otter lacks objection handling or follow-up automation             |
-| Fireflies    | Weak on security & structured CRM sync                             |
-| MS Copilot   | Only works in Teams; Sally is platform-agnostic + multilingual     |
-
----
-
-🎯 YOUR GOAL
-
-Extract up to 5 **specific coaching points** to improve how the rep sold Sally in this call.
-
-Coach the rep on:
-- Tying Sally to pain (admin, notes, missed follow-ups, CRM mess)
-- Objection handling (AI, compliance, training effort)
-- Feature-to-impact clarity (cue cards = talk track control; instant docs = faster objection handling)
-- Missed upsell signals (e.g., CS, HR, multilingual teams)
-- Buyer alignment gaps (CRO wants ROI; IT wants data control)
-- Competitive clarity (Don’t just name-drop competitors — differentiate surgically)
-
-Return ONLY a JSON block with markdown bullets under 120 words.
-
-Be blunt. Be sharp. Be helpful.`         
-            
-
-
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
+  "analysis": "- Tip 1\\n- Tip 2\\n- Tip 3"
+}`
       });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new OpenAIError('No response content received from OpenAI');
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(thread.id, {
+        assistant_id: targetAssistantId
+      });
+      
+      // Wait for the run to complete
+      let runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
       }
-
+      
+      if (runStatus.status === 'failed') {
+        throw new OpenAIError(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      if (runStatus.status === 'cancelled') {
+        throw new OpenAIError('Assistant run was cancelled');
+      }
+      
+      // Get the messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(thread.id);
+      
+      // Find the assistant's response (the most recent message from the assistant)
+      const assistantMessage = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      
+      if (!assistantMessage || !assistantMessage.content || assistantMessage.content.length === 0) {
+        throw new OpenAIError('No response received from assistant');
+      }
+      
+      const content = assistantMessage.content[0].text.value;
+      
       return this.parseQuickAnalysisResponse(content);
     } catch (error) {
       if (error instanceof OpenAIError) {
@@ -424,7 +295,7 @@ Be blunt. Be sharp. Be helpful.`
 
 
 
-  async analyzeDisco(conversation, context = {}, assistantId = null) {
+  async analyzeDisco(conversation, context = {}, assistantId = null, threadId = null) {
     console.log('Analyzing DISCO for conversation:', conversation);
     console.log('Context:', context);
     const currentDisco = context.currentDISCO || {};
@@ -600,27 +471,77 @@ IMPORTANT:
 - **Adapt the depth and specificity based on the conversation content** - be more generic when the conversation lacks specific details about SALLY or the product being sold.`;
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: this.config.model,
-        temperature: this.config.temperature,
-        max_tokens: this.config.max_tokens,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
-        ]
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new OpenAIError('No response content received from OpenAI');
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
       }
+      
+      // Add the DISCO analysis request to the thread
+      await this.openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `Analyze this conversation using the DISCO framework and extract structured insights:
 
+CONVERSATION:
+${conversation}
+
+CURRENT DISCO DATA (build upon existing insights):
+- Decision Criteria: ${formattedDisco.Decision_Criteria}
+- Impact: ${formattedDisco.Impact}
+- Situation: ${formattedDisco.Situation}
+- Challenges: ${formattedDisco.Challenges}
+- Objectives: ${formattedDisco.Objectives}
+
+Based on your knowledge and any available context, provide DISCO analysis with exactly 3 points per category. If no valuable insights can be extracted, respond with "No valuable insights available":
+{
+  "Decision_Criteria": "• Criteria 1\\n• Criteria 2\\n• Criteria 3",
+  "Impact": "• Impact 1\\n• Impact 2\\n• Impact 3",
+  "Situation": "• Situation 1\\n• Situation 2\\n• Situation 3",
+  "Challenges": "• Challenge 1\\n• Challenge 2\\n• Challenge 3",
+  "Objectives": "• Objective 1\\n• Objective 2\\n• Objective 3"
+}`
+      });
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(thread.id, {
+        assistant_id: targetAssistantId
+      });
+      
+      // Wait for the run to complete
+      let runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      }
+      
+      if (runStatus.status === 'failed') {
+        throw new OpenAIError(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      if (runStatus.status === 'cancelled') {
+        throw new OpenAIError('Assistant run was cancelled');
+      }
+      
+      // Get the messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(thread.id);
+      
+      // Find the assistant's response (the most recent message from the assistant)
+      const assistantMessage = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      
+      if (!assistantMessage || !assistantMessage.content || assistantMessage.content.length === 0) {
+        throw new OpenAIError('No response received from assistant');
+      }
+      
+      const content = assistantMessage.content[0].text.value;
+      
       return this.parseDiscoResponse(content);
     } catch (error) {
       if (error instanceof OpenAIError) {
@@ -649,7 +570,7 @@ IMPORTANT:
     }
   }
 
-  async analyzePostCallSteps(conversation, assistantId = null) {
+  async analyzePostCallSteps(conversation, assistantId = null, threadId = null) {
     console.log('Analyzing post-call steps for conversation:', conversation);
     
     const systemPrompt = `You are a senior sales strategist and post-call execution specialist. You analyze sales conversations and generate structured action items for **SALLY**, an AI-powered Sales Co-Pilot used by global B2B sales teams.
@@ -713,27 +634,71 @@ Return ONLY a JSON object with this exact structure:
 }`;
 
     try {
-      const response = await this.openai.chat.completions.create({
-        model: this.config.model,
-        temperature: this.config.temperature,
-        max_tokens: this.config.max_tokens,
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
-        ]
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new OpenAIError('No response content received from OpenAI');
+      // Use provided assistantId or default
+      const targetAssistantId = assistantId || this.assistantId;
+      
+      // Use provided threadId or create a new thread
+      let thread;
+      if (threadId) {
+        thread = { id: threadId };
+      } else {
+        thread = await this.openai.beta.threads.create();
       }
+      
+      // Add the post-call steps analysis request to the thread
+      await this.openai.beta.threads.messages.create(thread.id, {
+        role: 'user',
+        content: `Analyze this conversation and extract follow-up action items:
 
+CONVERSATION:
+${conversation}
+
+Based on your knowledge and any available context, provide exactly 3 follow-up steps per category. If no valuable insights can be extracted, respond with "No valuable insights available":
+{
+  "followUpActions": "- Action 1\\n- Action 2\\n- Action 3",
+  "informationGathering": "- Research 1\\n- Research 2\\n- Research 3",
+  "stakeholderEngagement": "- Contact 1\\n- Contact 2\\n- Contact 3",
+  "proposalPreparation": "- Prep 1\\n- Prep 2\\n- Prep 3",
+  "internalCoordination": "- Task 1\\n- Task 2\\n- Task 3",
+  "timelineManagement": "- Deadline 1\\n- Deadline 2\\n- Deadline 3"
+}`
+      });
+      
+      // Run the assistant on the thread
+      const run = await this.openai.beta.threads.runs.create(thread.id, {
+        assistant_id: targetAssistantId
+      });
+      
+      // Wait for the run to complete
+      let runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      
+      while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        runStatus = await this.openai.beta.threads.runs.retrieve(thread.id, run.id);
+      }
+      
+      if (runStatus.status === 'failed') {
+        throw new OpenAIError(`Assistant run failed: ${runStatus.last_error?.message || 'Unknown error'}`);
+      }
+      
+      if (runStatus.status === 'cancelled') {
+        throw new OpenAIError('Assistant run was cancelled');
+      }
+      
+      // Get the messages from the thread
+      const messages = await this.openai.beta.threads.messages.list(thread.id);
+      
+      // Find the assistant's response (the most recent message from the assistant)
+      const assistantMessage = messages.data
+        .filter(msg => msg.role === 'assistant')
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      
+      if (!assistantMessage || !assistantMessage.content || assistantMessage.content.length === 0) {
+        throw new OpenAIError('No response received from assistant');
+      }
+      
+      const content = assistantMessage.content[0].text.value;
+      
       return this.parsePostCallStepsResponse(content);
     } catch (error) {
       if (error instanceof OpenAIError) {
@@ -845,28 +810,56 @@ Return ONLY a JSON object with this exact structure:
   }
 
   parseQuickAnalysisResponse(response) {
+    // Handle "No valuable insights available" case
+    if (response.includes('No valuable insights available')) {
+      return { analysis: 'No valuable insights available' };
+    }
+
+    // Try to extract JSON from response
     const jsonMatch = response.match(/\{.*\}/s);
     if (!jsonMatch) {
-      throw new OpenAIError('Invalid JSON response from OpenAI');
+      // If no JSON found, return the response as analysis
+      return { analysis: response.trim() };
     }
 
     try {
       const parsed = JSON.parse(jsonMatch[0]);
       if (!parsed.analysis) {
-        throw new OpenAIError('Missing analysis field in quick analysis response');
+        // If no analysis field, use the whole response
+        return { analysis: response.trim() };
       }
       return parsed;
     } catch (error) {
-      throw new OpenAIError(`Failed to parse JSON: ${error.message}`);
+      // If JSON parsing fails, return the response as analysis
+      return { analysis: response.trim() };
     }
   }
 
 
 
   parseDiscoResponse(response) {
+    // Handle "No valuable insights available" case
+    if (response.includes('No valuable insights available')) {
+      return {
+        Decision_Criteria: 'No valuable insights available',
+        Impact: 'No valuable insights available',
+        Situation: 'No valuable insights available',
+        Challenges: 'No valuable insights available',
+        Objectives: 'No valuable insights available'
+      };
+    }
+
+    // Try to extract JSON from response
     const jsonMatch = response.match(/\{.*\}/s);
     if (!jsonMatch) {
-      throw new OpenAIError('Invalid JSON response from OpenAI');
+      // If no JSON found, return default structure
+      return {
+        Decision_Criteria: response.trim() || 'None yet',
+        Impact: 'None yet',
+        Situation: 'None yet',
+        Challenges: 'None yet',
+        Objectives: 'None yet'
+      };
     }
 
     try {
@@ -881,14 +874,42 @@ Return ONLY a JSON object with this exact structure:
       
       return parsed;
     } catch (error) {
-      throw new OpenAIError(`Failed to parse JSON: ${error.message}`);
+      // If JSON parsing fails, return default structure
+      return {
+        Decision_Criteria: response.trim() || 'None yet',
+        Impact: 'None yet',
+        Situation: 'None yet',
+        Challenges: 'None yet',
+        Objectives: 'None yet'
+      };
     }
   }
 
   parsePostCallStepsResponse(response) {
+    // Handle "No valuable insights available" case
+    if (response.includes('No valuable insights available')) {
+      return {
+        followUpActions: 'No valuable insights available',
+        informationGathering: 'No valuable insights available',
+        stakeholderEngagement: 'No valuable insights available',
+        proposalPreparation: 'No valuable insights available',
+        internalCoordination: 'No valuable insights available',
+        timelineManagement: 'No valuable insights available'
+      };
+    }
+
+    // Try to extract JSON from response
     const jsonMatch = response.match(/\{.*\}/s);
     if (!jsonMatch) {
-      throw new OpenAIError('Invalid JSON response from OpenAI');
+      // If no JSON found, return default structure
+      return {
+        followUpActions: response.trim() || 'None yet',
+        informationGathering: 'None yet',
+        stakeholderEngagement: 'None yet',
+        proposalPreparation: 'None yet',
+        internalCoordination: 'None yet',
+        timelineManagement: 'None yet'
+      };
     }
 
     try {
@@ -903,7 +924,15 @@ Return ONLY a JSON object with this exact structure:
       
       return parsed;
     } catch (error) {
-      throw new OpenAIError(`Failed to parse JSON: ${error.message}`);
+      // If JSON parsing fails, return default structure
+      return {
+        followUpActions: response.trim() || 'None yet',
+        informationGathering: 'None yet',
+        stakeholderEngagement: 'None yet',
+        proposalPreparation: 'None yet',
+        internalCoordination: 'None yet',
+        timelineManagement: 'None yet'
+      };
     }
   }
 }

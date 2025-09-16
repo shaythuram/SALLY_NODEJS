@@ -44,6 +44,12 @@ const quickAnswerValidation = [
     .isString()
     .withMessage('The assistantId field must be a string.'),
   
+  body('threadId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The threadId field must be a string.'),
+  
   handleValidationErrors
 ];
 
@@ -155,6 +161,12 @@ const discoValidation = [
     .isString()
     .withMessage('The assistantId field must be a string.'),
   
+  body('threadId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The threadId field must be a string.'),
+  
   handleValidationErrors
 ];
 
@@ -187,6 +199,12 @@ const postCallStepsValidation = [
     .trim()
     .isString()
     .withMessage('The assistantId field must be a string.'),
+  
+  body('threadId')
+    .optional()
+    .trim()
+    .isString()
+    .withMessage('The threadId field must be a string.'),
   
   handleValidationErrors
 ];
