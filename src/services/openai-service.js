@@ -27,136 +27,8 @@ class OpenAIService {
     this.assistantId = 'asst_UhbQJ7HBkkLvj5NeMOd5daVT';
   }
 
-  // OLD VERSION - COMMENTED OUT
-  /*
-  async aiChat(userQuery) {
-    const prompt = `You are a contextual sales coach assisting AI SaaS sales professionals in real time. Given a user's mid-call question, your job is to provide concise, practical, and actionable guidance that helps them navigate the conversation effectively.
 
-You are equipped with the following internal sales knowledge:
-
----
-
-### 🔍 COMMON AI USE CASES  
-- **Retail**: Personalized search, real-time product matching, dynamic pricing  
-- **Finance**: Document processing, fraud detection, onboarding acceleration  
-- **Healthcare**: Imaging support, clinical decision assistance  
-- **Manufacturing**: Predictive maintenance, quality control  
-- **Insurance**: Claims triage, risk analysis  
-- **HR**: Resume screening, candidate scoring  
-
----
-
-### 🧪 AI-SPECIFIC QUALIFYING QUESTIONS  
-- What type of AI model are you using or evaluating?  
-- Do you need fine-tuning or is base performance enough?  
-- What are your latency expectations for inference?  
-- Deployment model: cloud, on-prem, or hybrid?  
-- How much data are you working with, and of what type?  
-- Are there compliance concerns (GDPR, PII, HIPAA)?  
-- What integrations do you require (CRM, APIs, databases)?
-
----
-
-### 💬 DISCOVERY STARTER QUESTIONS (DISCO-Aligned)
-- **Decision Criteria**: How are you evaluating vendors? What matters most?  
-- **Impact**: What happens if the problem persists? What would success look like?  
-- **Situation**: What's your current tool stack and workflow?  
-- **Challenges**: What's not working today? What's blocked progress in the past?  
-- **Objectives**: What goals or internal milestones are you targeting in 3–12 months?
-
----
-
-Now, use this knowledge to answer the user's real-time sales question.
-
-Assume they are currently in a **live discovery or qualification call**.
-
----
-
-USER QUERY:  
-${userQuery}
-
----
-
-Respond in this exact JSON format:
-{
-  "response": "Your helpful and actionable response here. Focus on providing practical sales advice, tips, or guidance."
-}
-
-`;
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: this.config.model,
-        temperature: this.config.temperature,
-        max_tokens: this.config.max_tokens,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a contextual sales coach assisting AI SaaS sales professionals in real time. Given a user's mid-call question, your job is to provide concise, practical, and actionable guidance that helps them navigate the conversation effectively.
-
-You are equipped with the following internal sales knowledge:
-
----
-
-### 🔍 COMMON AI USE CASES  
-- **Retail**: Personalized search, real-time product matching, dynamic pricing  
-- **Finance**: Document processing, fraud detection, onboarding acceleration  
-- **Healthcare**: Imaging support, clinical decision assistance  
-- **Manufacturing**: Predictive maintenance, quality control  
-- **Insurance**: Claims triage, risk analysis  
-- **HR**: Resume screening, candidate scoring  
-
----
-
-### 🧪 AI-SPECIFIC QUALIFYING QUESTIONS  
-- What type of AI model are you using or evaluating?  
-- Do you need fine-tuning or is base performance enough?  
-- What are your latency expectations for inference?  
-- Deployment model: cloud, on-prem, or hybrid?  
-- How much data are you working with, and of what type?  
-- Are there compliance concerns (GDPR, PII, HIPAA)?  
-- What integrations do you require (CRM, APIs, databases)?
-
----
-
-### 💬 DISCOVERY STARTER QUESTIONS (DISCO-Aligned)
-- **Decision Criteria**: How are you evaluating vendors? What matters most?  
-- **Impact**: What happens if the problem persists? What would success look like?  
-- **Situation**: What's your current tool stack and workflow?  
-- **Challenges**: What's not working today? What's blocked progress in the past?  
-- **Objectives**: What goals or internal milestones are you targeting in 3–12 months?
-
----
-
-Now, use this knowledge to answer the user's real-time sales question.
-
-Assume they are currently in a **live discovery or qualification call**.
-
----`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new OpenAIError('No response content received from OpenAI');
-      }
-
-      return this.parseAiChatResponse(content);
-    } catch (error) {
-      if (error instanceof OpenAIError) {
-        throw error;
-      }
-      throw new OpenAIError(`AI chat failed: ${error.message}`);
-    }
-  }
-  */
-
-  // NEW VERSION - USING OPENAI ASSISTANT
+/// SHAY INPUT - HERE IS WHERE WE DO REALTIME QNA
   async aiChat(userQuery, assistantId = null, threadId = null) {
     try {
       // Use provided assistantId or default
@@ -221,7 +93,10 @@ Assume they are currently in a **live discovery or qualification call**.
       throw new OpenAIError(`AI chat failed: ${error.message}`);
     }
   }
+/// SHAY INPUT - HERE IS WHERE WE DO REALTIME QNA
 
+
+/// SHAY INPUT - HERE IS WHERE WE DO OUR REALTIME GENIE ANALYSIS
   async quickAnalysis(conversation, assistantId = null, threadId = null) {
     try {
       // Use provided assistantId or default
@@ -292,7 +167,7 @@ Based on your knowledge and any available context, provide coaching insights in 
       throw new OpenAIError(`Quick analysis failed: ${error.message}`);
     }
   }
-
+/// SHAY INPUT - HERE IS WHERE WE DO OUR REALTIME GENIE ANALYSIS
 
 
   async analyzeDisco(conversation, context = {}, assistantId = null, threadId = null) {
@@ -482,7 +357,7 @@ IMPORTANT:
         thread = await this.openai.beta.threads.create();
       }
       
-      // Add the DISCO analysis request to the thread
+//// SHAY INPUT - HERE IS WHERE WE DO OUR DISCO ANALYSIS
       await this.openai.beta.threads.messages.create(thread.id, {
         role: 'user',
         content: `Analyze this conversation using the DISCO framework and extract structured insights:
@@ -506,6 +381,7 @@ Based on your knowledge and any available context, provide DISCO analysis with e
   "Objectives": "• Objective 1\\n• Objective 2\\n• Objective 3"
 }`
       });
+//// SHAY INPUT - HERE IS WHERE WE DO OUR DISCO ANALYSIS
       
       // Run the assistant on the thread
       const run = await this.openai.beta.threads.runs.create(thread.id, {
@@ -565,6 +441,9 @@ Based on your knowledge and any available context, provide DISCO analysis with e
       } else {
         thread = await this.openai.beta.threads.create();
       }
+
+
+//// SHAY INPUT - HERE IS WHERE WE DO OUR SUMMARY OF THE CONVO 
       
       // Format additional context
       const discoContext = discoAnalysis ? `
@@ -616,7 +495,8 @@ The summary should be:
 
 If no valuable insights can be extracted, respond with "No valuable insights available".`
       });
-      
+//// SHAY INPUT - HERE IS WHERE WE DO OUR SUMMARY OF THE CONVO 
+  
       // Run the assistant on the thread
       const run = await this.openai.beta.threads.runs.create(thread.id, {
         assistant_id: targetAssistantId
@@ -675,7 +555,7 @@ If no valuable insights can be extracted, respond with "No valuable insights ava
       } else {
         thread = await this.openai.beta.threads.create();
       }
-      
+// SHAY INPUT - HERE IS WHERE WE GENERATE RESPONSE FOR POST CALL STEPS
       // Step 1: Analyze the action item to determine content type
       await this.openai.beta.threads.messages.create(thread.id, {
         role: 'user',
@@ -705,7 +585,7 @@ Guidelines for each type:
 
 Make the content detailed, professional, and directly address the action item requirements.`
       });
-      
+// SHAY INPUT - HERE IS WHERE WE GENERATE RESPONSE FOR POST CALL STEPS  
       // Run the assistant on the thread
       const run = await this.openai.beta.threads.runs.create(thread.id, {
         assistant_id: targetAssistantId
@@ -768,7 +648,7 @@ Make the content detailed, professional, and directly address the action item re
       throw new OpenAIError(`Ephemeral key generation failed: ${error.message}`);
     }
   }
-
+// SHAY INPUT - HERE IS WHERE WE CREATE POST CALL STEPS 
   async analyzePostCallSteps(conversation, assistantId = null, threadId = null, discoAnalysis = null, genieSupport = null) {
     console.log('Analyzing comprehensive post-call steps for conversation');
     
@@ -871,7 +751,7 @@ Each action item should be detailed, specific, and directly tied to something fr
       throw new OpenAIError(`Post-call steps analysis failed: ${error.message}`);
     }
   }
-
+// SHAY INPUT - HERE IS WHERE WE CREATE POST CALL STEPS 
 
 
   formatDiscoData(data) {
