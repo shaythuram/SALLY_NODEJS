@@ -55,11 +55,7 @@ router.post('/recall-bot', async (req, res, next) => {
     // Log full response data
     console.log("✅ Recall.ai API response:", response.data);
 
-    res.json({
-      success: true,
-      message: "Recall.ai bot created successfully",
-      botId: response.data.id
-    });
+    res.json(response.data.id);
 
   } catch (error) {
     console.error("❌ Error calling Recall.ai API:", error.response?.data || error.message);
