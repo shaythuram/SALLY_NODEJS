@@ -10,6 +10,7 @@ const ephemeralKeyRoutes = require('./routes/ephemeral-key');
 const postCallStepsRoutes = require('./routes/post-call-steps');
 const aiSummaryRoutes = require('./routes/ai-summary');
 const aiCompleteRoutes = require('./routes/ai-complete');
+const recallBotRoutes = require('./routes/recall-bot');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -47,6 +48,7 @@ app.use('/api', discoRoutes);
 app.use('/api', postCallStepsRoutes);
 app.use('/api', aiSummaryRoutes);
 app.use('/api', aiCompleteRoutes);
+app.use('/api', recallBotRoutes);
 app.use('/api/realtime', ephemeralKeyRoutes);
 
 // 404 handler

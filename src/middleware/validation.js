@@ -345,6 +345,18 @@ const aiCompleteValidation = [
   handleValidationErrors
 ];
 
+const recallBotValidation = [
+  body('meeting_url')
+    .optional()
+    .trim()
+    .isURL()
+    .withMessage('The meeting_url field must be a valid URL.')
+    .isLength({ max: 2000 })
+    .withMessage('The meeting_url field must not exceed 2000 characters.'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   quickAnswerValidation,
   discoValidation,
@@ -352,5 +364,6 @@ module.exports = {
   postCallStepsValidation,
   aiSummaryValidation,
   aiCompleteValidation,
+  recallBotValidation,
   ValidationError
 }; 
