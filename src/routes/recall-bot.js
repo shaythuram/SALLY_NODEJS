@@ -36,7 +36,7 @@ router.post('/recall-bot', async (req, res, next) => {
         realtime_endpoints: [
           {
             type: "websocket",
-            url: "wss://e9119bba0e96.ngrok-free.app",
+            url: "wss://1a6d37fce563.ngrok-free.app",
             events: ["transcript.data"],
           },
         ],
